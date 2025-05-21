@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Debate Room</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; color: #212529; }
+    .header-img { width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #dee2e6; }
+    .section-title { font-weight: 600; margin-top: 30px; margin-bottom: 15px; text-align: center; font-size: 22px; color: #343a40; }
+    .card-custom { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); padding: 24px; margin-bottom: 30px; }
+    .action-button { border-radius: 30px; padding: 8px 28px; border: none; background: #343a40; color: #fff; font-weight: 500; transition: background 0.2s; }
+    .action-button:hover { background-color: #212529; }
+    .form-label { font-weight: 500; }
+    .h6 { color: #6c757d; }
+    #editor-week1, #editor-week2, #editor-week3 { height: 200px; background: white; }
+    .tab-wrapper { max-width: 900px; margin: 40px auto; background-color: #fdfdff; border-radius: 16px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05); padding: 30px 25px; }
+    .nav-tabs { border: none; justify-content: center; margin-bottom: 20px; }
+    .nav-tabs .nav-item { margin: 0 6px; }
+    .nav-tabs .nav-link { border-radius: 30px; background-color: #e9ecef; color: #495057; padding: 10px 25px; font-weight: 500; transition: all 0.3s ease; }
+    .nav-tabs .nav-link:hover { background-color: #dee2e6; color: #212529; }
+    .nav-tabs .nav-link.active { background-color: #343a40; color: #fff; font-weight: 600; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
+    .tab-pane { animation: fadein 0.3s ease-in-out; }
+    @keyframes fadein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  </style>
+</head>
+<body>
+{% include 'nav.html' %}
+<img src="{{ url_for('static', filename='images/login_bg.jpg') }}" class="header-img" alt="Topic">
+<div class="text-center mt-4 mb-3">
+  <h3 class="fw-bold">{{ topic }}</h3>
+  <p class="text-muted">{{ country }} | Conversation Date: {{ date }}</p>
+</div>
+<div class="container">
+  <div class="section-title">Participants</div>
+  <div class="row mb-4">
+    <div class="col-md-6">
+      <div class="card-custom text-center">
+        <div class="h6 mb-3">Left Group</div>
+        {% for member in left_group %}<div>{{ member }}</div>{% endfor %}
+      </div>
+    </div>
+    <div class="col-md-6">
+      <div class="card-custom text-center">
+        <div class="h6 mb-3">Right Group</div>
+        {% for member in right_group %}<div>{{ member }}</div>{% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="tab-wrapper">
+  <ul class="nav nav-tabs" id="weekTabs" role="tablist">
+    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#week1">WEEK 1</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#week2">WEEK 2</button></li>
+    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#week3">WEEK 3</button></li>
+  </ul>
+  <div class="tab-content mt-4">
+    <div class="tab-pane fade show active" id="week1">
+      <div class="card-custom">
+        <h5 class="section-title">Pre-Debate Survey</h5>
+{% if not pre_submitted %}
+<div id="preSurveyWrapper">
+  <form id="preSurveyForm">
+    <label class="form-label">Your stance:</label><br>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="stance" value="support">
+      <label class="form-check-label">Support</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="stance" value="oppose">
+      <label class="form-check-label">Oppose</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="stance" value="neutral">
+      <label class="form-check-label">Neutral</label>
+    </div>
+<!--    <textarea class="form-control mt-3" name="comment" placeholder="Optional comment"></textarea>-->
+    <div class="text-end mt-2">
+      <button class="action-button" type="submit">Submit Survey</button>
+    </div>
+  </form>
+</div>
+{% else %}
+<div id="alreadySubmittedMsg" class="text-center text-success fw-semibold">
+  ✅ You have submitted the pre-debate survey.
+</div>
+{% endif %}
+
+      </div>
+      <div id="preChartWrapper" style="display: none;">
+        <div class="card-custom">
+          <h5 class="section-title">Pre Survey Results</h5>
+          <canvas id="preSurveyChart"></canvas>
+        </div>
+      </div>
+      <div class="card-custom">
+        <h5 class="section-title">Preparation Note</h5>
+        <div id="editor-week1"></div>
+        <div class="text-end mt-2">
+          <button class="action-button" onclick="submitNote('week1')">Save Note</button>
+          <button class="action-button btn-outline-light" onclick="summarizeNote('week1')">Summarize</button>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="week2">
+      <div class="card-custom text-center">
+        <h5 class="section-title">Debate Discussion</h5>
+        <p class="text-muted">Please refer to your notes and engage in meaningful discussion this week.</p>
+      </div>
+      <div class="card-custom">
+        <h5 class="section-title">Discussion Note</h5>
+        <div id="editor-week2"></div>
+        <div class="text-end mt-2">
+          <button class="action-button" onclick="submitNote('week2')">Save Note</button>
+          <button class="action-button btn-outline-light" onclick="summarizeNote('week2')">Summarize</button>
+        </div>
+      </div>
+    </div>
+    <div class="tab-pane fade" id="week3">
+      <div class="card-custom">
+        <h5 class="section-title">Post-Debate Survey</h5>
+        {% if not post_submitted %}
+        <form id="postSurveyForm">
+          <label class="form-label">Has your stance changed?</label><br>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="post_stance" value="support">
+            <label class="form-check-label">Support</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="post_stance" value="oppose">
+            <label class="form-check-label">Oppose</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" name="post_stance" value="neutral">
+            <label class="form-check-label">Neutral</label>
+          </div>
+          <textarea class="form-control mt-3" name="post_comment" placeholder="Feedback"></textarea>
+          <div class="text-end mt-2">
+            <button class="action-button" type="submit">Submit Post Survey</button>
+          </div>
+        </form>
+        {% else %}
+        <div class="text-center text-success fw-semibold">✅ You have submitted the post-debate survey.</div>
+        {% endif %}
+      </div>
+      <div id="postChartWrapper" style="display: none;">
+        <div class="card-custom">
+          <h5 class="section-title">Post Survey Results</h5>
+          <canvas id="postSurveyChart"></canvas>
+        </div>
+      </div>
+<!--      <div class="card-custom">-->
+<!--        <h5 class="section-title">Comments</h5>-->
+<!--        <form method="POST" action="/comment">-->
+<!--          <textarea class="form-control mb-3" name="comment" placeholder="Leave your feedback..."></textarea>-->
+<!--          <button class="action-button" type="submit">Submit Comment</button>-->
+<!--        </form>-->
+<!--      </div>-->
+      <div class="card-custom">
+        <h5 class="section-title">Final Discussion Note</h5>
+        <div id="editor-week3"></div>
+        <div class="text-end mt-2">
+          <button class="action-button" onclick="submitNote('week3')">Save Note</button>
+          <button class="action-button btn-outline-light" onclick="summarizeNote('week3')">Summarize</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+async function loadPreSurveyChart() {
+  const res = await fetch('/get-survey-data');
+  const data = await res.json();
+  if (data.error) return;
+  document.getElementById("preChartWrapper").style.display = "block";
+  const ctx = document.getElementById('preSurveyChart');
+  if (ctx) {
+    if (window.preSurveyChartInstance) window.preSurveyChartInstance.destroy();
+    window.preSurveyChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Support', 'Oppose', 'Neutral'],
+        datasets: [{ label: 'Pre-Debate', data: data.pre, backgroundColor: 'rgba(108, 117, 125, 0.7)' }]
+      },
+      options: { indexAxis: 'y', responsive: true, scales: { x: { beginAtZero: true } } }
+    });
+  }
+}
+
+async function loadPostSurveyChart() {
+  const res = await fetch('/get-survey-data');
+  const data = await res.json();
+  if (data.error) return;
+  document.getElementById("postChartWrapper").style.display = "block";
+  const ctx = document.getElementById('postSurveyChart');
+  if (ctx) {
+    if (window.postSurveyChartInstance) window.postSurveyChartInstance.destroy();
+    window.postSurveyChartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: ['Support', 'Oppose', 'Neutral'],
+        datasets: [{ label: 'Post-Debate', data: data.post, backgroundColor: 'rgba(52, 58, 64, 0.7)' }]
+      },
+      options: { indexAxis: 'y', responsive: true, scales: { x: { beginAtZero: true } } }
+    });
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  {% if pre_submitted %} loadPreSurveyChart(); {% endif %}
+  {% if post_submitted %} loadPostSurveyChart(); {% endif %}
+});
+
+
+document.getElementById('preSurveyForm')?.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const stance = document.querySelector('input[name="stance"]:checked')?.value;
+  const comment = document.querySelector('textarea[name="comment"]')?.value;
+  if (!stance) return alert("Please select your stance.");
+  fetch("/survey/pre", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ stance, comment })
+  }).then(res => res.json()).then(data => {
+    if (data.status === "ok" || data.status === "duplicate") {
+      document.getElementById("preSurveyWrapper").style.display = "none";
+      document.getElementById("alreadySubmittedMsg").style.display = "block";
+      loadPreSurveyChart();
+      setTimeout(() => { document.getElementById("preChartWrapper").scrollIntoView({ behavior: "smooth" }); }, 300);
+    } else {
+      alert("Survey submission failed.");
+    }
+  });
+});
+document.getElementById('postSurveyForm')?.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const stance = document.querySelector('input[name="post_stance"]:checked')?.value;
+  const comment = document.querySelector('textarea[name="post_comment"]')?.value;
+  if (!stance) return alert("Please select your stance.");
+  fetch("/survey/post", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ stance, comment })
+  }).then(res => res.json()).then(data => {
+    if (data.status === "ok" || data.status === "duplicate") {
+      document.getElementById("postSurveyForm").style.display = "none";
+      loadPostSurveyChart();
+      setTimeout(() => { document.getElementById("postChartWrapper").scrollIntoView({ behavior: "smooth" }); }, 300);
+    } else {
+      alert("Survey submission failed.");
+    }
+  });
+});
+</script>
+<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
+<script>
+const editors = {};
+['week1', 'week2', 'week3'].forEach(week => {
+  editors[week] = new Quill(`#editor-${week}`, {
+    theme: 'snow',
+    placeholder: `Write your ${week === 'week1' ? 'preparation' : week === 'week2' ? 'discussion' : 'final discussion'} notes...`,
+    modules: { toolbar: [['bold', 'italic', 'underline'], ['link'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']] }
+  });
+});
+</script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
