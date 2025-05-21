@@ -96,26 +96,57 @@
   </ul>
 
   <div class="tab-content mt-4">
+    <!-- WEEK 1 -->
     <div class="tab-pane fade show active" id="week1">
       <div class="card-custom">
         <h5 class="section-title">Pre-Debate Survey</h5>
-        <p>This section shows the pre-debate survey results and preparation notes submitted during the debate.</p>
+        <canvas id="preChart"></canvas>
+      </div>
+      <div class="card-custom">
+        <h5 class="section-title">Preparation Notes</h5>
+        {% for note in notes %}
+          {% if 'week1' in note[1] %}
+          <div class="border rounded p-2 mb-3">
+            <small class="text-muted">{{ note[2] }}</small>
+            <div>{{ note[1] | safe }}</div>
+          </div>
+          {% endif %}
+        {% endfor %}
       </div>
     </div>
 
+    <!-- WEEK 2 -->
     <div class="tab-pane fade" id="week2">
       <div class="card-custom">
-        <h5 class="section-title">Debate Discussion</h5>
-        <p>This section summarizes the discussion and shared thoughts during the main debate week.</p>
+        <h5 class="section-title">Debate Discussion Notes</h5>
+        {% for note in notes %}
+          {% if 'week2' in note[1] %}
+          <div class="border rounded p-2 mb-3">
+            <small class="text-muted">{{ note[2] }}</small>
+            <div>{{ note[1] | safe }}</div>
+          </div>
+          {% endif %}
+        {% endfor %}
       </div>
     </div>
 
+    <!-- WEEK 3 -->
     <div class="tab-pane fade" id="week3">
       <div class="card-custom">
         <h5 class="section-title">Post-Debate Survey</h5>
-        <p>This section shows the post-debate survey results, comments, and final reflections from participants.</p>
+        <canvas id="postChart"></canvas>
       </div>
-
+      <div class="card-custom">
+        <h5 class="section-title">Reflections</h5>
+        {% for note in notes %}
+          {% if 'week3' in note[1] %}
+          <div class="border rounded p-2 mb-3">
+            <small class="text-muted">{{ note[2] }}</small>
+            <div>{{ note[1] | safe }}</div>
+          </div>
+          {% endif %}
+        {% endfor %}
+      </div>
       <div class="card-custom">
         <h5 class="section-title">Results Comparison</h5>
         <canvas id="surveyChart"></canvas>
@@ -126,9 +157,50 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-  const ctx = document.getElementById('surveyChart');
-  if (ctx) {
-    new Chart(ctx, {
+  const preCtx = document.getElementById('preChart');
+  const postCtx = document.getElementById('postChart');
+  const compareCtx = document.getElementById('surveyChart');
+
+  if (preCtx) {
+    new Chart(preCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Support', 'Oppose', 'Neutral'],
+        datasets: [{
+          label: 'Pre-Debate',
+          data: {{ pre_data | safe }},
+          backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: { x: { beginAtZero: true } },
+        responsive: true
+      }
+    });
+  }
+
+  if (postCtx) {
+    new Chart(postCtx, {
+      type: 'bar',
+      data: {
+        labels: ['Support', 'Oppose', 'Neutral'],
+        datasets: [{
+          label: 'Post-Debate',
+          data: {{ post_data | safe }},
+          backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
+        }]
+      },
+      options: {
+        indexAxis: 'y',
+        scales: { x: { beginAtZero: true } },
+        responsive: true
+      }
+    });
+  }
+
+  if (compareCtx) {
+    new Chart(compareCtx, {
       type: 'bar',
       data: {
         labels: ['Support', 'Oppose', 'Neutral'],

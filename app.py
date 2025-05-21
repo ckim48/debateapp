@@ -460,14 +460,34 @@ def view_debate(debate_id):
         cursor = conn.cursor()
         cursor.execute("SELECT topic, country, date FROM debates WHERE id = ?", (debate_id,))
         debate = cursor.fetchone()
+        if not debate:
+            flash("Debate not found.")
+            return redirect(url_for('dashboard'))
 
-    if not debate:
-        flash("Debate not found.")
-        return redirect(url_for('dashboard'))
+        topic, country, date = debate
 
-    topic, country, date = debate
+        # Pre and Post Survey Results
+        def get_counts(phase):
+            cursor.execute("SELECT stance FROM surveys WHERE debate_id = ? AND phase = ?", (debate_id, phase))
+            data = cursor.fetchall()
+            counts = {'support': 0, 'oppose': 0, 'neutral': 0}
+            for (stance,) in data:
+                if stance in counts:
+                    counts[stance] += 1
+            return [counts['support'], counts['oppose'], counts['neutral']]
 
-    return render_template('debate_view.html', topic=topic, country=country, date=date)
+        pre_data = get_counts('pre')
+        post_data = get_counts('post')
+
+        # Notes
+        cursor.execute("SELECT user_id, content, created_at FROM notes WHERE week IN ('week1', 'week2', 'week3') AND user_id IN (SELECT user_id FROM surveys WHERE debate_id = ?)", (debate_id,))
+        notes = cursor.fetchall()
+
+    return render_template('debate_view.html',
+                           topic=topic, country=country, date=date,
+                           pre_data=pre_data, post_data=post_data,
+                           notes=notes)
+
 
 if __name__ == '__main__':
     init_db()
