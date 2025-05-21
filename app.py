@@ -12,6 +12,7 @@ app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 DB_PATH = 'biasbridge.db'
 
+
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
