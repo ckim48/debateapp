@@ -224,7 +224,6 @@ def login():
         flash("Invalid credentials.")
     return render_template('login.html')
 
-
 @app.route('/mypage')
 def mypage():
     if 'user_id' not in session:
@@ -235,24 +234,34 @@ def mypage():
 
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
-        # Get each topic and user's stance on it
+        # Get all debates the user participated in
         cursor.execute('''
-            SELECT d.topic, s.stance
+            SELECT d.id, d.topic, s.stance
             FROM surveys s
-            JOIN debates d ON d.id = (
-                SELECT id FROM debates WHERE topic = d.topic LIMIT 1
-            )
+            JOIN debates d ON d.id = s.debate_id
             WHERE s.user_id = ?
         ''', (user_id,))
-        rows = cursor.fetchall()
+        user_stances = cursor.fetchall()
 
-    summary_data = {}
-    for topic, stance in rows:
-        if topic not in summary_data:
-            summary_data[topic] = {'support': 0, 'oppose': 0, 'neutral': 0}
-        summary_data[topic][stance] += 1
+        # For each debate, get aggregate counts
+        debate_summaries = {}
+        for debate_id, topic, user_stance in user_stances:
+            cursor.execute('''
+                SELECT stance, COUNT(*) 
+                FROM surveys 
+                WHERE debate_id = ?
+                GROUP BY stance
+            ''', (debate_id,))
+            counts = dict(cursor.fetchall())
+            summary = {
+                'support': counts.get('support', 0),
+                'oppose': counts.get('oppose', 0),
+                'neutral': counts.get('neutral', 0),
+                'user_stance': user_stance
+            }
+            debate_summaries[topic] = summary
 
-    return render_template("mypage.html", username=username, summary_data=summary_data)
+    return render_template("mypage.html", username=username, debate_summaries=debate_summaries)
 
 
 @app.route('/dashboard')
