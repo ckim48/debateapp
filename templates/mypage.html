@@ -1,4 +1,3 @@
-<!-- templates/mypage.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,12 +27,11 @@
       font-weight: bold;
       margin-bottom: 10px;
     }
-    .summary-box, .card-box {
+    .summary-box {
       border: 1px solid #ccc;
       border-radius: 15px;
       background-color: white;
       padding: 20px;
-      height: 100%;
     }
   </style>
 </head>
@@ -41,13 +39,11 @@
   {% include 'nav.html' %}
 
   <div class="container py-4">
-
-
     <div class="row g-4">
       <!-- Profile Column -->
       <div class="col-md-3">
         <div class="profile-box text-center">
-          <div class="avatar">J</div>
+          <div class="avatar">{{ username[0]|upper }}</div>
           <h5><strong>{{ username }}</strong></h5>
           <hr>
           <p class="text-start"><strong>About</strong></p>
@@ -57,81 +53,52 @@
         </div>
       </div>
 
-      <!-- Summary and Cards Column -->
+      <!-- Summary Column -->
       <div class="col-md-9">
-        <!-- Summary Chart Card -->
-        <div class="summary-box mb-4">
-          <h5 class="text-center mb-3">General Political Orientation Summary</h5>
-          <canvas id="summaryChart" height="150"></canvas>
-        </div>
+        <h5 class="text-center mb-4">Your Debate Results</h5>
 
-        <!-- Three Placeholder Cards -->
-        <div class="row g-4">
-          <div class="col-md-4">
-            <div class="card-box"></div>
-          </div>
-          <div class="col-md-4">
-            <div class="card-box"></div>
-          </div>
-          <div class="col-md-4">
-            <div class="card-box"></div>
-          </div>
+        {% for topic, data in debate_summaries.items() %}
+        <div class="summary-box mb-4">
+          <h6 class="mb-2">{{ topic }}</h6>
+          <p><strong>Your stance:</strong> {{ data.user_stance|capitalize }}</p>
+          <canvas id="chart_{{ loop.index0 }}" height="120"></canvas>
         </div>
+        {% endfor %}
       </div>
     </div>
   </div>
 
-  <!-- Chart Initialization -->
+  <!-- Chart rendering -->
   <script>
-    const summaryData = {{ summary_data | tojson }};
-    const topics = Object.keys(summaryData);
-    const supportCounts = topics.map(t => summaryData[t].support || 0);
-    const opposeCounts = topics.map(t => summaryData[t].oppose || 0);
-    const neutralCounts = topics.map(t => summaryData[t].neutral || 0);
+    const debateSummaries = {{ debate_summaries | tojson }};
+    let chartIndex = 0;
 
-    const ctx = document.getElementById('summaryChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: topics,
-        datasets: [
-          {
-            label: 'Support',
-            data: supportCounts,
-            backgroundColor: '#4CAF50'
-          },
-          {
-            label: 'Oppose',
-            data: opposeCounts,
-            backgroundColor: '#F44336'
-          },
-          {
-            label: 'Neutral',
-            data: neutralCounts,
-            backgroundColor: '#FFC107'
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'top' },
-          title: {
-            display: false
-          }
+    for (const [topic, data] of Object.entries(debateSummaries)) {
+      const ctx = document.getElementById(`chart_${chartIndex}`).getContext('2d');
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Support', 'Oppose', 'Neutral'],
+          datasets: [{
+            label: 'Votes',
+            data: [data.support, data.oppose, data.neutral],
+            backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
+          }]
         },
-        scales: {
-          y: {
-            beginAtZero: true,
-            title: {
-              display: true,
-              text: 'Votes'
+        options: {
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              beginAtZero: true
             }
           }
         }
-      }
-    });
+      });
+      chartIndex++;
+    }
   </script>
-
 </body>
 </html>

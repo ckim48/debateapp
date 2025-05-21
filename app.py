@@ -30,6 +30,7 @@ def init_db():
                 phase TEXT,
                 stance TEXT,
                 comment TEXT,
+                debate_id INTEGER,
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
@@ -71,7 +72,6 @@ def init_db():
                 is_active INTEGER DEFAULT 1
             )
         ''')
-        # Seed example debates (skip if already exists)
         cursor.execute("SELECT COUNT(*) FROM debates")
         if cursor.fetchone()[0] == 0:
             cursor.executemany(
@@ -83,7 +83,6 @@ def init_db():
                 ]
             )
         conn.commit()
-
 def is_admin():
     return session.get('username') == 'test@test.com'
 @app.route('/create-debate', methods=['GET', 'POST'])
