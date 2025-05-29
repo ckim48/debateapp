@@ -229,6 +229,13 @@
       </div>
     </div>
   </div>
+<div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255,255,255,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+  <div class="spinner-border text-dark" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
+
 </div>
 
 <script>
@@ -404,6 +411,36 @@ document.getElementById('alignmentFormPost')?.addEventListener('submit', functio
     }
   });
 });
+<script>
+function summarizeNote(week) {
+  const html = editors[week].root.innerHTML;
+  const overlay = document.getElementById("loadingOverlay");
+  overlay.style.display = "flex";
+
+  fetch(`/summarize-note/${week}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ html })
+  })
+  .then(res => res.json())
+  .then(data => {
+    overlay.style.display = "none";
+    if (data.summary) {
+      alert("Summary added below your note.");
+      // Append summary to the editor content visually (optional)
+      editors[week].clipboard.dangerouslyPasteHTML(
+        `<p><strong>Summary:</strong> ${data.summary}</p>`, 'api'
+      );
+    } else {
+      alert("Summarization failed.");
+    }
+  })
+  .catch(() => {
+    overlay.style.display = "none";
+    alert("An error occurred while summarizing the note.");
+  });
+}
+</script>
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
