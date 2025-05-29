@@ -1,3 +1,5 @@
+<!-- Updated HTML below -->
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -96,8 +98,20 @@
   </ul>
 
   <div class="tab-content mt-4">
-    <!-- WEEK 1 -->
     <div class="tab-pane fade show active" id="week1">
+      {% if alignment_result %}
+<div class="alert alert-info text-center">
+  <strong>Your Political Alignment:</strong> {{ alignment_result | capitalize }}
+</div>
+{% endif %}
+
+      {% if user_pre_survey %}
+      <div class="alert alert-light">
+        <strong>Your Pre-Debate Stance:</strong> {{ user_pre_survey[1] | capitalize }}<br>
+        <strong>Your Comment:</strong> {{ user_pre_survey[0] }}
+      </div>
+      {% endif %}
+
       <div class="card-custom">
         <h5 class="section-title">Pre-Debate Survey</h5>
         <canvas id="preChart"></canvas>
@@ -115,7 +129,6 @@
       </div>
     </div>
 
-    <!-- WEEK 2 -->
     <div class="tab-pane fade" id="week2">
       <div class="card-custom">
         <h5 class="section-title">Debate Discussion Notes</h5>
@@ -130,12 +143,24 @@
       </div>
     </div>
 
-    <!-- WEEK 3 -->
     <div class="tab-pane fade" id="week3">
+      {% if alignment_result %}
+<div class="alert alert-info text-center">
+  <strong>Your Political Alignment:</strong> {{ alignment_result | capitalize }}
+</div>
+{% endif %}
+
       <div class="card-custom">
         <h5 class="section-title">Post-Debate Survey</h5>
         <canvas id="postChart"></canvas>
       </div>
+      {% if user_post_survey %}
+<div class="alert alert-light">
+  <strong>Your Post-Debate Stance:</strong> {{ user_post_survey[1] | capitalize }}<br>
+  <strong>Your Comment:</strong> {{ user_post_survey[0] }}
+</div>
+{% endif %}
+
       <div class="card-custom">
         <h5 class="section-title">Reflections</h5>
         {% for note in notes %}
@@ -147,10 +172,6 @@
           {% endif %}
         {% endfor %}
       </div>
-<!--      <div class="card-custom">-->
-<!--        <h5 class="section-title">Results Comparison</h5>-->
-<!--        <canvas id="surveyChart"></canvas>-->
-<!--      </div>-->
     </div>
   </div>
 </div>
@@ -159,7 +180,6 @@
 <script>
   const preCtx = document.getElementById('preChart');
   const postCtx = document.getElementById('postChart');
-//  const compareCtx = document.getElementById('surveyChart');
 
   if (preCtx) {
     new Chart(preCtx, {
@@ -198,31 +218,6 @@
       }
     });
   }
-
-//  if (compareCtx) {
-//    new Chart(compareCtx, {
-//      type: 'bar',
-//      data: {
-//        labels: ['Support', 'Oppose', 'Neutral'],
-//        datasets: [
-//          {
-//            label: 'Pre-Debate',
-//            data: {{ pre_data | safe }},
-//            backgroundColor: 'rgba(108, 117, 125, 0.5)'
-//          },
-//          {
-//            label: 'Post-Debate',
-//            data: {{ post_data | safe }},
-//            backgroundColor: 'rgba(52, 58, 64, 0.5)'
-//          }
-//        ]
-//      },
-//      options: {
-//        responsive: true,
-//        scales: { y: { beginAtZero: true } }
-//      }
-//    });
-//  }
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

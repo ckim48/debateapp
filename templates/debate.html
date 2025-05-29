@@ -34,6 +34,7 @@
   <h3 class="fw-bold">{{ topic }}</h3>
   <p class="text-muted">{{ country }} | Conversation Date: {{ date }}</p>
 </div>
+
 <div class="container">
   <div class="section-title">Participants</div>
   <div class="row mb-4">
@@ -58,45 +59,75 @@
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#week2">WEEK 2</button></li>
     <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#week3">WEEK 3</button></li>
   </ul>
-  <div class="tab-content mt-4">
-    <div class="tab-pane fade show active" id="week1">
-      <div class="card-custom">
-        <h5 class="section-title">Pre-Debate Survey</h5>
-{% if not pre_submitted %}
-<div id="preSurveyWrapper">
-  <form id="preSurveyForm">
-    <label class="form-label">Your stance:</label><br>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" name="stance" value="support">
-      <label class="form-check-label">Support</label>
-    </div>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" name="stance" value="oppose">
-      <label class="form-check-label">Oppose</label>
-    </div>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" name="stance" value="neutral">
-      <label class="form-check-label">Neutral</label>
-    </div>
-<!--    <textarea class="form-control mt-3" name="comment" placeholder="Optional comment"></textarea>-->
-    <div class="text-end mt-2">
-      <button class="action-button" type="submit">Submit Survey</button>
-    </div>
-  </form>
-</div>
-{% else %}
-<div id="alreadySubmittedMsg" class="text-center text-success fw-semibold">
-  You have submitted the pre-debate survey.
-</div>
-{% endif %}
 
+  <div class="tab-content mt-4">
+    <!-- WEEK 1 -->
+    <div class="tab-pane fade show active" id="week1">
+      <div class="card-custom mb-4">
+        <h5 class="section-title">Political Alignment Test</h5>
+        {% if not alignment_pre %}
+        <form id="alignmentFormPre">
+          <p class="text-muted">Answer the following to determine your general alignment.</p>
+          <div class="mb-3">
+            <label class="form-label">Q1: Government should regulate the economy more strictly.</label>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="left"><label class="form-check-label">Agree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="right"><label class="form-check-label">Disagree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="center"><label class="form-check-label">Neutral</label></div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Q2: Individual freedom should be prioritized over social equality.</label>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="right"><label class="form-check-label">Agree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="left"><label class="form-check-label">Disagree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="center"><label class="form-check-label">Neutral</label></div>
+          </div>
+          <div class="text-end">
+            <button class="action-button" type="submit">Check Alignment</button>
+          </div>
+        </form>
+      <div id="alignmentResultPre" class="text-center mt-3 fw-bold" style="display: none;"></div>
+      {% else %}
+      <div id="alignmentResultPre" class="text-center mt-3 fw-bold">
+        Your pre-debate alignment is: <strong>{{ alignment_pre | capitalize }}</strong>.
       </div>
+      {% endif %}
+      </div>
+
+      <!-- Pre-Debate Survey -->
+<div class="card-custom">
+  <h5 class="section-title">Pre-Debate Survey</h5>
+  {% if not pre_submitted %}
+  <div id="preSurveyWrapper">
+    <form id="preSurveyForm">
+      <label class="form-label">Your stance:</label><br>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="stance" value="support">
+        <label class="form-check-label">Support</label>
+      </div>
+      <div class="form-check form-check-inline">
+        <input class="form-check-input" type="radio" name="stance" value="oppose">
+        <label class="form-check-label">Oppose</label>
+      </div>
+      <div class="text-end mt-2">
+        <button class="action-button" type="submit">Submit Survey</button>
+      </div>
+    </form>
+  </div>
+  {% else %}
+  <div id="alreadySubmittedMsg" class="text-center text-success fw-semibold">
+    You have submitted the pre-debate survey.
+  </div>
+  {% endif %}
+</div>
+
+
       <div id="preChartWrapper" style="display: none;">
         <div class="card-custom">
           <h5 class="section-title">Pre Survey Results</h5>
           <canvas id="preSurveyChart"></canvas>
         </div>
       </div>
+
+      <!-- Notes -->
       <div class="card-custom">
         <h5 class="section-title">Preparation Note</h5>
         <div id="editor-week1"></div>
@@ -106,6 +137,8 @@
         </div>
       </div>
     </div>
+
+    <!-- WEEK 2 -->
     <div class="tab-pane fade" id="week2">
       <div class="card-custom text-center">
         <h5 class="section-title">Debate Discussion</h5>
@@ -120,46 +153,72 @@
         </div>
       </div>
     </div>
+
+    <!-- WEEK 3 -->
     <div class="tab-pane fade" id="week3">
-      <div class="card-custom">
-        <h5 class="section-title">Post-Debate Survey</h5>
-        {% if not post_submitted %}
-        <form id="postSurveyForm">
-          <label class="form-label">Has your stance changed?</label><br>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="post_stance" value="support">
-            <label class="form-check-label">Support</label>
+      <div class="card-custom mb-4">
+        <h5 class="section-title">Political Alignment Test</h5>
+        {% if not alignment_post %}
+
+        <form id="alignmentFormPost">
+          <p class="text-muted">Answer the following to determine your general alignment.</p>
+          <div class="mb-3">
+            <label class="form-label">Q1: Government should regulate the economy more strictly.</label>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="left"><label class="form-check-label">Agree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="right"><label class="form-check-label">Disagree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="center"><label class="form-check-label">Neutral</label></div>
           </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="post_stance" value="oppose">
-            <label class="form-check-label">Oppose</label>
+          <div class="mb-3">
+            <label class="form-label">Q2: Individual freedom should be prioritized over social equality.</label>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="right"><label class="form-check-label">Agree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="left"><label class="form-check-label">Disagree</label></div>
+            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="center"><label class="form-check-label">Neutral</label></div>
           </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" name="post_stance" value="neutral">
-            <label class="form-check-label">Neutral</label>
-          </div>
-          <textarea class="form-control mt-3" name="post_comment" placeholder="Feedback"></textarea>
-          <div class="text-end mt-2">
-            <button class="action-button" type="submit">Submit Post Survey</button>
+          <div class="text-end">
+            <button class="action-button" type="submit">Check Alignment</button>
           </div>
         </form>
-        {% else %}
-        <div class="text-center text-success fw-semibold">You have submitted the post-debate survey.</div>
-        {% endif %}
+<div id="alignmentResultPost" class="text-center mt-3 fw-bold" style="display: none;"></div>
+{% else %}
+<div id="alignmentResultPost" class="text-center mt-3 fw-bold">
+  Your post-debate alignment is: <strong>{{ alignment_post | capitalize }}</strong>.
+</div>
+{% endif %}
       </div>
+
+<div class="card-custom">
+  <h5 class="section-title">Post-Debate Survey</h5>
+  {% if not post_submitted %}
+  <form id="postSurveyForm">
+    <label class="form-label">Has your stance changed?</label><br>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="post_stance" value="support">
+      <label class="form-check-label">Support</label>
+    </div>
+    <div class="form-check form-check-inline">
+      <input class="form-check-input" type="radio" name="post_stance" value="oppose">
+      <label class="form-check-label">Oppose</label>
+    </div>
+    <textarea class="form-control mt-3" name="post_comment" placeholder="Feedback"></textarea>
+    <div class="text-end mt-2">
+      <button class="action-button" type="submit">Submit Post Survey</button>
+    </div>
+  </form>
+  {% else %}
+  <div class="text-center text-success fw-semibold">
+    You have submitted the post-debate survey.
+  </div>
+  {% endif %}
+</div>
+
       <div id="postChartWrapper" style="display: none;">
         <div class="card-custom">
           <h5 class="section-title">Post Survey Results</h5>
           <canvas id="postSurveyChart"></canvas>
         </div>
       </div>
-<!--      <div class="card-custom">-->
-<!--        <h5 class="section-title">Comments</h5>-->
-<!--        <form method="POST" action="/comment">-->
-<!--          <textarea class="form-control mb-3" name="comment" placeholder="Leave your feedback..."></textarea>-->
-<!--          <button class="action-button" type="submit">Submit Comment</button>-->
-<!--        </form>-->
-<!--      </div>-->
+
+      <!-- Final Notes -->
       <div class="card-custom">
         <h5 class="section-title">Final Discussion Note</h5>
         <div id="editor-week3"></div>
@@ -171,6 +230,7 @@
     </div>
   </div>
 </div>
+
 <script>
 async function loadPreSurveyChart() {
   const res = await fetch('/get-survey-data');
@@ -215,46 +275,73 @@ window.addEventListener('DOMContentLoaded', () => {
   {% if post_submitted %} loadPostSurveyChart(); {% endif %}
 });
 
-
 document.getElementById('preSurveyForm')?.addEventListener('submit', function (e) {
   e.preventDefault();
   const stance = document.querySelector('input[name="stance"]:checked')?.value;
   const comment = document.querySelector('textarea[name="comment"]')?.value;
   if (!stance) return alert("Please select your stance.");
-  fetch("/survey/pre", {
+
+  fetch(`/survey/pre?debate_id={{ debate_id }}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ stance, comment })
   }).then(res => res.json()).then(data => {
     if (data.status === "ok" || data.status === "duplicate") {
-      document.getElementById("preSurveyWrapper").style.display = "none";
-      document.getElementById("alreadySubmittedMsg").style.display = "block";
+      // Hide the form wrapper
+      const wrapper = document.getElementById("preSurveyWrapper");
+      wrapper.style.display = "none";
+
+      // Dynamically insert the message
+      const msg = document.createElement("div");
+      msg.id = "alreadySubmittedMsg";
+      msg.className = "text-center text-success fw-semibold mt-2";
+      msg.textContent = "You have submitted the pre-debate survey.";
+      wrapper.parentNode.appendChild(msg);
+
+      // Load chart and scroll
       loadPreSurveyChart();
-      setTimeout(() => { document.getElementById("preChartWrapper").scrollIntoView({ behavior: "smooth" }); }, 300);
+      setTimeout(() => {
+        document.getElementById("preChartWrapper").scrollIntoView({ behavior: "smooth" });
+      }, 300);
     } else {
       alert("Survey submission failed.");
     }
   });
 });
+
 document.getElementById('postSurveyForm')?.addEventListener('submit', function (e) {
   e.preventDefault();
   const stance = document.querySelector('input[name="post_stance"]:checked')?.value;
   const comment = document.querySelector('textarea[name="post_comment"]')?.value;
   if (!stance) return alert("Please select your stance.");
-  fetch("/survey/post", {
+
+  fetch(`/survey/post?debate_id={{ debate_id }}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ stance, comment })
   }).then(res => res.json()).then(data => {
     if (data.status === "ok" || data.status === "duplicate") {
-      document.getElementById("postSurveyForm").style.display = "none";
+      // Hide the post-survey form
+      const postForm = document.getElementById("postSurveyForm");
+      postForm.style.display = "none";
+
+      // Inject confirmation message
+      const msg = document.createElement("div");
+      msg.className = "text-center text-success fw-semibold mt-2";
+      msg.textContent = "You have submitted the post-debate survey.";
+      postForm.parentNode.appendChild(msg);
+
+      // Load chart and scroll to it
       loadPostSurveyChart();
-      setTimeout(() => { document.getElementById("postChartWrapper").scrollIntoView({ behavior: "smooth" }); }, 300);
+      setTimeout(() => {
+        document.getElementById("postChartWrapper").scrollIntoView({ behavior: "smooth" });
+      }, 300);
     } else {
       alert("Survey submission failed.");
     }
   });
 });
+
 </script>
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script>
@@ -266,6 +353,58 @@ const editors = {};
     modules: { toolbar: [['bold', 'italic', 'underline'], ['link'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']] }
   });
 });
+</script>
+<script>document.getElementById('alignmentFormPre')?.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const responses = ['q1', 'q2'].map(q =>
+    document.querySelector(`input[name="${q}"]:checked`)?.value
+  );
+  if (responses.includes(undefined)) return alert("Please answer all alignment questions.");
+
+  const count = { left: 0, center: 0, right: 0 };
+  responses.forEach(r => count[r]++);
+  const alignment = Object.entries(count).sort((a, b) => b[1] - a[1])[0][0];
+
+  fetch(`/save-alignment/{{ debate_id }}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ alignment, phase: 'pre' })
+  }).then(res => {
+    if (res.ok) {
+      document.getElementById("alignmentResultPre").textContent =
+        `Your pre-debate alignment is: ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}.`;
+      document.getElementById("alignmentResultPre").style.display = "block";
+    } else {
+      alert("Failed to save pre alignment.");
+    }
+  });
+});
+document.getElementById('alignmentFormPost')?.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const responses = ['q1', 'q2'].map(q =>
+    document.querySelector(`#week3 input[name="${q}"]:checked`)?.value
+  );
+  if (responses.includes(undefined)) return alert("Please answer all alignment questions.");
+
+  const count = { left: 0, center: 0, right: 0 };
+  responses.forEach(r => count[r]++);
+  const alignment = Object.entries(count).sort((a, b) => b[1] - a[1])[0][0];
+
+  fetch(`/save-alignment/{{ debate_id }}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ alignment, phase: 'post' })
+  }).then(res => {
+    if (res.ok) {
+      document.getElementById("alignmentResultPost").textContent =
+        `Your post-debate alignment is: ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}.`;
+      document.getElementById("alignmentResultPost").style.display = "block";
+    } else {
+      alert("Failed to save post alignment.");
+    }
+  });
+});
+
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 </body>

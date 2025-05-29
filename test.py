@@ -1,32 +1,119 @@
 import sqlite3
+import random
+
 DB_PATH = 'biasbridge.db'
-def insert_mock_surveys_for_debate1_and_2():
-    mock_data = [
-        # Debate ID 1: Gun Control Legislation
-        (1, 'pre', 'support', 'Stricter laws save lives.', 1),
-        (2, 'pre', 'oppose', 'People need self-defense.', 1),
-        (3, 'pre', 'neutral', 'Both sides make good points.', 1),
-        (1, 'post', 'support', 'I’m even more in favor now.', 1),
-        (2, 'post', 'oppose', 'Still firmly against it.', 1),
-        (3, 'post', 'neutral', 'Still unsure.', 1),
 
-        # Debate ID 2: Forgiving student loan debt
-        (1, 'pre', 'support', 'Helps reduce inequality.', 2),
-        (2, 'pre', 'oppose', 'Tax burden is too high.', 2),
-        (3, 'pre', 'support', 'Good for the economy.', 2),
-        (1, 'post', 'support', 'Strongly believe in it.', 2),
-        (2, 'post', 'oppose', 'No change in opinion.', 2),
-        (3, 'post', 'support', 'Now even more supportive.', 2),
-    ]
-
+def add_mock_closed_debates():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
-        for user_id, phase, stance, comment, debate_id in mock_data:
+
+        cursor.execute("SELECT COUNT(*) FROM debates WHERE is_active = 0")
+        if cursor.fetchone()[0] == 0:
+            closed_debates = [
+                ("Climate Change Policy", "South Korea", "2024.11.12"),
+                ("Raising the Minimum Wage", "South Korea", "2024.10.30"),
+                ("Banning Facial Recognition Tech", "South Korea", "2024.09.18")
+            ]
+            cursor.executemany(
+                "INSERT INTO debates (topic, country, date, is_active) VALUES (?, ?, ?, 0)",
+                closed_debates
+            )
+            conn.commit()
+            print("✅ Closed debates added.")
+        else:
+            print("ℹ️ Closed debates already exist.")
+
+def generate_mock_surveys():
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+
+        # Ensure alignment_results table exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS alignment_results (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                user_id INTEGER,
+                debate_id INTEGER,
+                alignment TEXT,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+
+        # Create mock users
+        for i in range(1, 6):
+            username = f"user{i}@mock.com"
+            cursor.execute("SELECT id FROM users WHERE username = ?", (username,))
+            if not cursor.fetchone():
+                cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", (username, 'testpass'))
+
+        # Ensure admin user exists
+        cursor.execute("SELECT id FROM users WHERE username = 'test@test.com'")
+        admin = cursor.fetchone()
+        if not admin:
+            cursor.execute("INSERT INTO users (username, password) VALUES (?, ?)", ('test@test.com', 'adminpass'))
+            conn.commit()
+            cursor.execute("SELECT id FROM users WHERE username = 'test@test.com'")
+            admin = cursor.fetchone()
+        admin_user_id = admin[0]
+
+        conn.commit()
+
+        # Fetch user IDs
+        cursor.execute("SELECT id FROM users WHERE username LIKE 'user%@mock.com'")
+        user_ids = [row[0] for row in cursor.fetchall()]
+
+        # Get closed debate IDs
+        cursor.execute("SELECT id FROM debates WHERE is_active = 0")
+        closed_debates = [row[0] for row in cursor.fetchall()]
+        if not closed_debates:
+            print("❌ No closed debates found. Run add_mock_closed_debates() first.")
+            return
+
+        stances = ['support', 'oppose', 'neutral']
+        alignments = ['left', 'center', 'right']
+
+        for debate_id in closed_debates:
+            for user_id in user_ids:
+                # Pre-survey
+                cursor.execute('''
+                    INSERT INTO surveys (user_id, phase, stance, comment, debate_id)
+                    VALUES (?, 'pre', ?, ?, ?)
+                ''', (user_id, random.choice(stances), "This is my initial opinion.", debate_id))
+
+                # Post-survey
+                cursor.execute('''
+                    INSERT INTO surveys (user_id, phase, stance, comment, debate_id)
+                    VALUES (?, 'post', ?, ?, ?)
+                ''', (user_id, random.choice(stances), "After hearing arguments, this is what I think.", debate_id))
+
+                # Political alignment
+                cursor.execute('''
+                    INSERT INTO alignment_results (user_id, debate_id, alignment)
+                    VALUES (?, ?, ?)
+                ''', (user_id, debate_id, random.choice(alignments)))
+
+            # Admin's survey responses
             cursor.execute('''
                 INSERT INTO surveys (user_id, phase, stance, comment, debate_id)
-                VALUES (?, ?, ?, ?, ?)
-            ''', (user_id, phase, stance, comment, debate_id))
-        conn.commit()
-    print("Mock survey data for debate ID 1 and 2 inserted.")
+                VALUES (?, 'pre', ?, ?, ?)
+            ''', (admin_user_id, random.choice(stances), "Admin's pre-debate opinion.", debate_id))
 
-insert_mock_surveys_for_debate1_and_2()
+            cursor.execute('''
+                INSERT INTO surveys (user_id, phase, stance, comment, debate_id)
+                VALUES (?, 'post', ?, ?, ?)
+            ''', (admin_user_id, random.choice(stances), "Admin's post-debate reflection.", debate_id))
+
+            # Admin's alignment
+            cursor.execute('''
+                INSERT INTO alignment_results (user_id, debate_id, alignment)
+                VALUES (?, ?, ?)
+            ''', (admin_user_id, debate_id, random.choice(alignments)))
+
+        conn.commit()
+        print("✅ Mock survey and alignment data inserted.")
+
+def setup_demo_data():
+    add_mock_closed_debates()
+    generate_mock_surveys()
+
+if __name__ == '__main__':
+    setup_demo_data()

@@ -1,32 +1,69 @@
-<nav class="navbar navbar-expand-lg bg-white shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm sticky-top py-2">
   <div class="container">
     <!-- Brand Logo -->
-    <a class="navbar-brand fw-bold" href="{{ url_for('index') }}">BiasBridge</a>
+    <a class="navbar-brand fw-bold  fs-4" href="{{ url_for('index') }}">BiasBridge</a>
 
-    <!-- Toggler for mobile -->
+    <!-- Mobile Toggle -->
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
       <span class="navbar-toggler-icon"></span>
     </button>
 
-    <!-- Navbar Links -->
+    <!-- Navigation Links -->
     <div class="collapse navbar-collapse" id="navbarNav">
-      <ul class="navbar-nav ms-auto">
+      <ul class="navbar-nav ms-auto gap-2">
         {% if session.get('user_id') %}
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('dashboard') }}">Dashboard</a>
+            <a class="nav-link px-3" href="{{ url_for('dashboard') }}">Dashboard</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('mypage') }}">My Page</a>
+            <a class="nav-link px-3" href="{{ url_for('mypage') }}">My Page</a>
           </li>
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('logout') }}">Logout</a>
+            <a class="nav-link px-3 text-danger" href="{{ url_for('logout') }}">Logout</a>
           </li>
         {% else %}
           <li class="nav-item">
-            <a class="nav-link" href="{{ url_for('login') }}">Login</a>
+            <a class="nav-link px-3" href="{{ url_for('login') }}">Login</a>
           </li>
         {% endif %}
       </ul>
     </div>
   </div>
 </nav>
+
+<style>
+  .navbar-nav .nav-link {
+    position: relative;
+    color: #374151;
+    font-weight: 500;
+    transition: color 0.3s ease;
+  }
+
+.navbar-nav .nav-link::after {
+  content: '';
+  position: absolute;
+  left: 10%;
+  bottom: -4px;
+  width: 0%;
+  height: 2px;
+  background-color: #4f46e5;
+  transition: width 0.3s ease, left 0.3s ease;
+}
+
+.navbar-nav .nav-link:hover::after {
+  width: 80%;
+  left: 10%;
+}
+
+  .navbar-nav .nav-link:hover {
+    color: #4f46e5;
+  }
+
+  .navbar-nav .nav-link.text-danger:hover {
+    color: #dc3545;
+  }
+
+  .navbar-nav .nav-link.text-danger::after {
+    background-color: #dc3545;
+  }
+</style>
