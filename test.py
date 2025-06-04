@@ -38,6 +38,16 @@ def generate_mock_surveys():
             )
         ''')
 
+        # Ensure user_debate_roles table exists
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS user_debate_roles (
+                user_id INTEGER,
+                debate_id INTEGER,
+                side TEXT CHECK(side IN ('support', 'oppose')),
+                PRIMARY KEY (user_id, debate_id)
+            )
+        ''')
+
         # Create mock users
         for i in range(1, 6):
             username = f"user{i}@mock.com"
@@ -70,6 +80,7 @@ def generate_mock_surveys():
 
         stances = ['support', 'oppose', 'neutral']
         alignments = ['left', 'center', 'right']
+        sides = ['support', 'oppose']
 
         for debate_id in closed_debates:
             for user_id in user_ids:
@@ -85,13 +96,19 @@ def generate_mock_surveys():
                     VALUES (?, 'post', ?, ?, ?)
                 ''', (user_id, random.choice(stances), "After hearing arguments, this is what I think.", debate_id))
 
-                # Political alignment
+                # Alignment
                 cursor.execute('''
                     INSERT INTO alignment_results (user_id, debate_id, alignment)
                     VALUES (?, ?, ?)
                 ''', (user_id, debate_id, random.choice(alignments)))
 
-            # Admin's survey responses
+                # Role assignment
+                cursor.execute('''
+                    INSERT OR IGNORE INTO user_debate_roles (user_id, debate_id, side)
+                    VALUES (?, ?, ?)
+                ''', (user_id, debate_id, random.choice(sides)))
+
+            # Admin's surveys and alignment
             cursor.execute('''
                 INSERT INTO surveys (user_id, phase, stance, comment, debate_id)
                 VALUES (?, 'pre', ?, ?, ?)
@@ -102,14 +119,18 @@ def generate_mock_surveys():
                 VALUES (?, 'post', ?, ?, ?)
             ''', (admin_user_id, random.choice(stances), "Admin's post-debate reflection.", debate_id))
 
-            # Admin's alignment
             cursor.execute('''
                 INSERT INTO alignment_results (user_id, debate_id, alignment)
                 VALUES (?, ?, ?)
             ''', (admin_user_id, debate_id, random.choice(alignments)))
 
+            cursor.execute('''
+                INSERT OR IGNORE INTO user_debate_roles (user_id, debate_id, side)
+                VALUES (?, ?, ?)
+            ''', (admin_user_id, debate_id, random.choice(sides)))
+
         conn.commit()
-        print("✅ Mock survey and alignment data inserted.")
+        print("✅ Mock survey, alignment, and role assignment data inserted.")
 
 def setup_demo_data():
     add_mock_closed_debates()

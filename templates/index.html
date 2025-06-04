@@ -3,110 +3,144 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>BiasBridge - Political Debate Platform</title>
+  <title>BiasBridge – Debate Without Division</title>
+
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
+
+  <!-- Bootstrap Icons -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+
+  <!-- AOS Animate On Scroll -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet">
+
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f9f9f9;
+      font-family: 'Inter', sans-serif;
+      background-color: #f9f9fb;
       color: #333;
     }
 
     .hero {
-  position: relative;
-  height: 100vh;
-  background: url('{{ url_for("static", filename="images/login_bg.jpg") }}') no-repeat center center/cover;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  text-align: center;
-}
+      position: relative;
+      height: 100vh;
+      background: url('{{ url_for("static", filename="images/login_bg.jpg") }}') no-repeat center center / cover;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
 
-.hero::before {
-  content: "";
-  position: absolute;
-  top: 0; left: 0;
-  width: 100%; height: 100%;
-  background: rgba(0, 0, 0, 0.55); /* Dark overlay */
-  z-index: 1;
-}
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.6));
+      z-index: 0;
+    }
 
-.hero-content {
-  position: relative;
-  z-index: 2;
-  backdrop-filter: blur(6px);
-  background-color: rgba(255, 255, 255, 0.05);
-  border-radius: 20px;
-  padding: 40px;
-  max-width: 800px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-}
+    .hero-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      color: #fff;
+      padding: 3rem;
+      max-width: 720px;
+      backdrop-filter: blur(6px);
+    }
 
-.hero-content h1 {
-  font-size: 3.5rem;
-  font-weight: 700;
-  margin-bottom: 20px;
-  color: #ffffff;
-}
+    .hero-content h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+    }
 
-.hero-content p {
-  font-size: 1.25rem;
-  color: #f1f1f1;
-  margin-bottom: 30px;
-}
+    .hero-content p {
+      font-size: 1.25rem;
+      margin-top: 1rem;
+      color: #e0e0e0;
+    }
 
-.hero .btn {
-  padding: 12px 28px;
-  font-weight: 500;
-  border-radius: 30px;
-  transition: 0.3s ease;
-}
+    .hero-content .btn {
+      margin-top: 2rem;
+      padding: 12px 28px;
+      border-radius: 30px;
+      font-weight: 600;
+    }
 
     .section-title {
-      font-weight: 700;
-      font-size: 2rem;
+      position: relative;
+      font-size: 2.5rem;
+      font-weight: 800;
       text-align: center;
-      margin-bottom: 40px;
+      color: #2c2c2c;
+      margin-bottom: 1rem;
+      letter-spacing: -0.5px;
+    }
+
+    .section-title::after {
+      content: "";
+      display: block;
+      width: 60px;
+      height: 4px;
+      margin: 16px auto 0;
+      background: linear-gradient(90deg, #444, #888);
+      border-radius: 10px;
     }
 
     .section-subtitle {
       text-align: center;
       color: #6c757d;
-      max-width: 700px;
-      margin: 0 auto 60px;
       font-size: 1.1rem;
+      max-width: 720px;
+      margin: 0 auto 3rem;
+      font-weight: 400;
     }
 
     .feature-card {
-      background: white;
-      border: none;
-      border-radius: 15px;
-      padding: 30px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-      transition: transform 0.3s;
+      background: #fff;
+      border-radius: 20px;
+      padding: 2rem;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.04);
+      transition: all 0.3s ease;
+      height: 100%;
     }
 
     .feature-card:hover {
       transform: translateY(-5px);
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
     }
 
     .feature-card h5 {
-      font-weight: 600;
-      color: #1e3c72;
+      font-weight: 700;
+      margin-bottom: 0.75rem;
+      color: #1e1e1e;
     }
 
     .feature-card p {
+      font-size: 0.95rem;
       color: #555;
+    }
+
+    .feature-icon {
+      color: #4a4a4a;
+    }
+
+    .about-img {
+      max-width: 500px;
+      width: 100%;
+      display: block;
+      margin: 0 auto;
     }
 
     footer {
       background: #fff;
       border-top: 1px solid #ddd;
-      padding: 25px 0;
+      padding: 20px 0;
       text-align: center;
-      color: #666;
       font-size: 0.95rem;
+      color: #666;
     }
   </style>
 </head>
@@ -114,69 +148,69 @@
 
   {% include 'nav.html' %}
 
+  <!-- Hero Section -->
 <section class="hero">
-  <div class="hero-content">
-    <h1>BiasBridge</h1>
-    <p>Challenge perspectives and reduce political polarization through structured, student-led debates powered by real-time news and data insights.</p>
-    <div class="mt-4">
-      <a href="{{ url_for('login') }}" class="btn btn-light me-2">Login</a>
+  <div class="hero-content" data-aos="zoom-in" data-aos-duration="1000">
+    <h1 data-aos="fade-down" data-aos-delay="200">BiasBridge</h1>
+    <p data-aos="fade-up" data-aos-delay="400">
+      Challenge perspectives, reduce political division, and develop critical thinking through structured, student-led debates fueled by real-time data.
+    </p>
+    <div class="d-flex justify-content-center gap-3" data-aos="fade-up" data-aos-delay="600">
+      <a href="{{ url_for('login') }}" class="btn btn-light text-dark">Login</a>
       <a href="{{ url_for('register') }}" class="btn btn-outline-light">Register</a>
     </div>
   </div>
 </section>
 
 
-  <!-- Overview Section -->
+  <!-- About Section -->
   <section class="py-5">
     <div class="container">
-      <h2 class="section-title">What is BiasBridge?</h2>
-      <p class="section-subtitle">
-        BiasBridge is a web-based platform for students to explore controversial political topics, examine real-time news from both sides, and engage in structured debates designed to develop empathy, reduce bias, and promote political literacy.
+      <h2 class="section-title" data-aos="fade-up">Bridging Perspectives Through Dialogue</h2>
+      <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+        BiasBridge is a digital platform designed to develop empathy and critical thinking through student-led political debates and real-time data analysis.
       </p>
+      <div class="row align-items-center">
+        <div class="col-lg-6 mb-4" data-aos="fade-right">
+          <img src="{{ url_for('static', filename='images/about.jpg') }}" class="about-img rounded" alt="Debate Illustration">
+        </div>
+        <div class="col-lg-6" data-aos="fade-left">
+          <ul class="list-unstyled">
+            <li class="mb-2"><i class="bi bi-check-circle-fill feature-icon me-2"></i> Fosters open-minded discussion</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill feature-icon me-2"></i> Encourages awareness of ideological framing</li>
+            <li class="mb-2"><i class="bi bi-check-circle-fill feature-icon me-2"></i> Builds debate and empathy skills</li>
+          </ul>
+        </div>
+      </div>
     </div>
   </section>
 
   <!-- Features Section -->
   <section class="py-5 bg-light">
     <div class="container">
-      <h2 class="section-title">Platform Features</h2>
-      <div class="row g-4">
-        <div class="col-md-4">
-          <div class="feature-card h-100">
-            <h5>Debate Dashboard</h5>
-            <p>Organize structured debates, assign moderators, and distribute students into opposing teams intelligently.</p>
+      <h2 class="section-title" data-aos="fade-up">What Makes BiasBridge Unique</h2>
+      <p class="section-subtitle" data-aos="fade-up" data-aos-delay="100">
+        From live news filtering to perception tracking and peer review, each tool is built to elevate civil discourse.
+      </p>
+      <div class="row g-4 mt-4">
+        {% for icon, title, desc in [
+          ['bi-diagram-3-fill', 'Debate Dashboard', 'Organize structured debates, assign moderators, and distribute students into teams.'],
+          ['bi-funnel-fill', 'News Bias Filtering', 'Analyze and filter news by bias using NLP to present balanced views.'],
+          ['bi-graph-up-arrow', 'Perception Analysis', 'Track changes in opinion and self-reflection with survey data.'],
+          ['bi-chat-dots-fill', 'Feedback & Comments', 'Enable reflective comments, peer reviews, and instructor feedback.'],
+          ['bi-collection-play-fill', 'Podcast Archive', 'Revisit sessions via recordings to promote review and engagement.'],
+          ['bi-joystick', 'Future Expansion', 'Gamify debate experiences and engage the whole school with voting tools.']
+        ] %}
+        <div class="col-md-4" data-aos="zoom-in">
+          <div class="feature-card text-center p-4 h-100">
+            <div class="mb-3">
+              <i class="bi {{ icon }} fs-1 feature-icon"></i>
+            </div>
+            <h5>{{ title }}</h5>
+            <p>{{ desc }}</p>
           </div>
         </div>
-        <div class="col-md-4">
-          <div class="feature-card h-100">
-            <h5>News Bias Filtering</h5>
-            <p>Integrate live news feeds classified as left/right using NLP and control article visibility by debate phase.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="feature-card h-100">
-            <h5>Perception Analysis</h5>
-            <p>Compare pre/post debate surveys using visual charts to track changes in opinion and self-awareness.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="feature-card h-100">
-            <h5>Feedback & Comments</h5>
-            <p>Leave post-debate feedback, summaries, and peer reviews to promote thoughtful reflection and learning.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="feature-card h-100">
-            <h5>Podcast Archive</h5>
-            <p>Watch recorded sessions or listen to debates on YouTube to revisit highlights and promote wider discourse.</p>
-          </div>
-        </div>
-        <div class="col-md-4">
-          <div class="feature-card h-100">
-            <h5>Future Expansion</h5>
-            <p>Bring debates to the full student body through a gamified battle system and school-wide voting platform.</p>
-          </div>
-        </div>
+        {% endfor %}
       </div>
     </div>
   </section>
@@ -187,6 +221,12 @@
       <p>© 2025 BiasBridge · Designed by 한승아</p>
     </div>
   </footer>
+
+  <!-- AOS JS -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+  <script>
+    AOS.init({ duration: 800, once: true });
+  </script>
 
 </body>
 </html>

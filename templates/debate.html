@@ -7,11 +7,89 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
+<!-- AOS Animate On Scroll -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+
   <style>
     body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; color: #212529; }
-    .header-img { width: 100%; height: 220px; object-fit: cover; border-bottom: 1px solid #dee2e6; }
-    .section-title { font-weight: 600; margin-top: 30px; margin-bottom: 15px; text-align: center; font-size: 22px; color: #343a40; }
-    .card-custom { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 16px rgba(0,0,0,0.03); padding: 24px; margin-bottom: 30px; }
+    .header-img { width: 100%; height: 320px; object-fit: cover; border-bottom: 1px solid #dee2e6; }
+  .section-title {
+    font-size: 1.8rem;
+    font-weight: 700;
+    text-align: center !important;
+    color: #212529;
+    margin-top: 20px;
+    margin-bottom: 50px;
+    border-bottom: 2px solid #dee2e6;
+    padding-bottom: 0.5rem;
+    display: inline-block;
+  }
+
+  .participant-card {
+    border: none;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    transition: transform 0.2s ease, box-shadow 0.3s ease;
+    background-color: #fff;
+  }
+
+  .participant-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  }
+
+  .participant-card h5 {
+    font-size: 1.2rem;
+    color: #343a40;
+  }
+
+  .participant-card ul li {
+    font-size: 0.95rem;
+    color: #555;
+    padding: 4px 0;
+  }
+
+  .icon-box {
+    width: 60px;
+    height: 60px;
+    margin: 0 auto;
+    border-radius: 50%;
+    background-color: rgba(0,0,0,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .support .icon-box {
+    background-color: rgba(25, 135, 84, 0.1); /* Bootstrap green */
+    color: #198754;
+  }
+
+  .oppose .icon-box {
+    background-color: rgba(220, 53, 69, 0.1); /* Bootstrap red */
+    color: #dc3545;
+  }
+
+  .participant-card i.bi {
+    font-size: 1.6rem;
+  }
+.card-custom {
+  margin-top: 30px;
+  background: linear-gradient(145deg, rgba(255,255,255,0.8), rgba(245,245,255,0.75));
+  backdrop-filter: blur(20px);
+  border-radius: 20px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+  padding: 28px 24px;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(200, 200, 255, 0.3);
+}
+
+.card-custom:hover {
+  box-shadow: 0 16px 40px rgba(0,0,0,0.12);
+  transform: translateY(-4px);
+}
+
     .action-button { border-radius: 30px; padding: 8px 28px; border: none; background: #343a40; color: #fff; font-weight: 500; transition: background 0.2s; }
     .action-button:hover { background-color: #212529; }
     .form-label { font-weight: 500; }
@@ -29,36 +107,114 @@
 </head>
 <body>
 {% include 'nav.html' %}
-<img src="{{ url_for('static', filename='images/login_bg.jpg') }}" class="header-img" alt="Topic">
-<div class="text-center mt-4 mb-3">
-  <h3 class="fw-bold">{{ topic }}</h3>
-  <p class="text-muted">{{ country }} | Conversation Date: {{ date }}</p>
+<div class="position-relative">
+  <img src="{{ url_for('static', filename=debate_image or 'images/login_bg.jpg') }}" class="header-img" alt="Topic">
+
+  <!-- Dark overlay -->
+  <div class="position-absolute top-0 start-0 w-100 h-100" style="background: rgba(0, 0, 0, 0.45);"></div>
+
+  <!-- Centered text with AOS animation -->
+  <div class="position-absolute top-50 start-50 translate-middle text-white text-center" data-aos="fade-up" data-aos-duration="1000">
+    <h1 class="fw-bold display-5" style="text-shadow: 0 0 10px rgba(0,0,0,0.6);">{{ topic }}</h1>
+    <p class="lead">{{ country }} | {{ date }}</p>
+  </div>
 </div>
 
+
+
 <div class="container">
-  <div class="section-title">Participants</div>
-  <div class="row mb-4">
-    <div class="col-md-6">
-      <div class="card-custom text-center">
-        <div class="h6 mb-3">Left Group</div>
-        {% for member in left_group %}<div>{{ member }}</div>{% endfor %}
+<div class="text-center">
+  <div class="section-title mt-5" data-aos="fade-up">Participants</div>
+</div>
+<div class="row mb-5 g-4">
+  <!-- Support Group -->
+  <div class="col-md-6">
+    <div class="card participant-card support" data-aos="fade-right">
+      <div class="card-body text-center">
+        <div class="icon-box">
+          <i class="bi bi-hand-thumbs-up-fill"></i>
+        </div>
+        <h5 class="fw-bold mt-3">Support Group ({{ left_group|length }})</h5>
+        {% if left_group %}
+          <ul class="list-unstyled mt-3 mb-0">
+            {% for member in left_group %}
+              <li><i class="bi bi-person-circle me-1"></i> <strong>{{ member.name.split(' ')[0] }}</strong> &lt;{{ member.email }}&gt;</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mt-3"><i class="bi bi-person-x-fill me-1"></i>No participants yet.</p>
+        {% endif %}
       </div>
     </div>
-    <div class="col-md-6">
-      <div class="card-custom text-center">
-        <div class="h6 mb-3">Right Group</div>
-        {% for member in right_group %}<div>{{ member }}</div>{% endfor %}
+  </div>
+
+  <!-- Oppose Group -->
+  <div class="col-md-6">
+    <div class="card participant-card oppose" data-aos="fade-left">
+      <div class="card-body text-center">
+        <div class="icon-box">
+          <i class="bi bi-hand-thumbs-down-fill"></i>
+        </div>
+        <h5 class="fw-bold mt-3">Oppose Group ({{ right_group|length }})</h5>
+        {% if right_group %}
+          <ul class="list-unstyled mt-3 mb-0">
+            {% for member in right_group %}
+              <li><i class="bi bi-person-circle me-1"></i> <strong>{{ member.name.split(' ')[0] }}</strong> &lt;{{ member.email }}&gt;</li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <p class="text-muted mt-3"><i class="bi bi-person-x-fill me-1"></i>No participants yet.</p>
+        {% endif %}
       </div>
     </div>
   </div>
 </div>
 
+
+</div>
+
 <div class="tab-wrapper">
-  <ul class="nav nav-tabs" id="weekTabs" role="tablist">
-    <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#week1">WEEK 1</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#week2">WEEK 2</button></li>
-    <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#week3">WEEK 3</button></li>
-  </ul>
+<ul class="nav nav-tabs" id="weekTabs" role="tablist">
+  <!-- WEEK 1 -->
+  <li class="nav-item" role="presentation">
+    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#week1" type="button" role="tab">
+      WEEK 1
+    </button>
+  </li>
+
+  <!-- WEEK 2 -->
+  <li class="nav-item" role="presentation">
+    <button class="nav-link d-flex align-items-center justify-content-center gap-1 {% if not week1_done %}{% endif %}"
+            type="button" role="tab"
+            {% if week1_done %}
+              data-bs-toggle="tab" data-bs-target="#week2"
+            {% else %}
+              data-bs-toggle="tooltip" data-bs-title="Complete WEEK 1 to unlock"
+            {% endif %}>
+      WEEK 2
+      {% if not week1_done %}
+      <i class="bi bi-lock-fill text-muted"></i>
+      {% endif %}
+    </button>
+  </li>
+
+  <!-- WEEK 3 -->
+  <li class="nav-item" role="presentation">
+    <button class="nav-link d-flex align-items-center justify-content-center gap-1 {% if not week2_done %}{% endif %}"
+            type="button" role="tab"
+            {% if week2_done %}
+              data-bs-toggle="tab" data-bs-target="#week3"
+            {% else %}
+              data-bs-toggle="tooltip" data-bs-title="Complete WEEK 2 to unlock"
+            {% endif %}>
+      WEEK 3
+      {% if not week2_done %}
+      <i class="bi bi-lock-fill text-muted"></i>
+      {% endif %}
+    </button>
+  </li>
+</ul>
+
 
   <div class="tab-content mt-4">
     <!-- WEEK 1 -->
@@ -86,9 +242,13 @@
         </form>
       <div id="alignmentResultPre" class="text-center mt-3 fw-bold" style="display: none;"></div>
       {% else %}
-      <div id="alignmentResultPre" class="text-center mt-3 fw-bold">
-        Your pre-debate alignment is: <strong>{{ alignment_pre | capitalize }}</strong>.
+      <div id="alignmentResultPre" class="text-center p-1">
+        <h5 class="mb-2">Your Pre-Debate Alignment</h5>
+        <div class="fs-4 fw-bold"  style="color: #6f42c1;">
+          {{ alignment_pre | capitalize }}
+        </div>
       </div>
+
       {% endif %}
       </div>
 
@@ -113,9 +273,11 @@
     </form>
   </div>
   {% else %}
-  <div id="alreadySubmittedMsg" class="text-center text-success fw-semibold">
-    You have submitted the pre-debate survey.
-  </div>
+<div id="alreadySubmittedMsg" class="mx-auto mt-0 p-3 rounded-3 text-center shadow-sm" style="max-width: 500px; background-color: #e6f4ea; border-left: 5px solid #198754; color: #198754;" data-aos="fade-up">
+  <i class="bi bi-check-circle-fill me-2"></i>
+  <span class="fw-semibold">You have already submitted the pre-debate survey.</span>
+</div>
+
   {% endif %}
 </div>
 
@@ -136,6 +298,12 @@
           <button class="action-button btn-outline-light" onclick="summarizeNote('week1')">Summarize</button>
         </div>
       </div>
+      {% if is_admin %}
+      <div class="text-center mt-3">
+      <button class="action-button" onclick="completeWeek('week1')">Complete</button>
+    </div>
+      {% endif %}
+
     </div>
 
     <!-- WEEK 2 -->
@@ -152,6 +320,11 @@
           <button class="action-button btn-outline-light" onclick="summarizeNote('week2')">Summarize</button>
         </div>
       </div>
+      {% if is_admin %}
+            <div class="text-center mt-3">
+      <button class="action-button" onclick="completeWeek('week2')">Complete</button>
+    </div>
+      {% endif %}
     </div>
 
     <!-- WEEK 3 -->
@@ -180,8 +353,14 @@
         </form>
 <div id="alignmentResultPost" class="text-center mt-3 fw-bold" style="display: none;"></div>
 {% else %}
-<div id="alignmentResultPost" class="text-center mt-3 fw-bold">
-  Your post-debate alignment is: <strong>{{ alignment_post | capitalize }}</strong>.
+<div id="alignmentResultPost" class="mx-auto mt-4 p-4 rounded-4 text-center shadow-sm" style="max-width: 500px; border-left: 6px solid #6f42c1; background-color: #f6f2fc;" data-aos="fade-up">
+  <h5 class="fw-bold mb-2">Post-Debate Alignment</h5>
+  <p class="mb-0 fs-5">
+    Your political stance after the debate is:
+    <span class="fw-bold text-uppercase" style="color: #6f42c1;">
+      {{ alignment_post | capitalize }}
+    </span>
+  </p>
 </div>
 {% endif %}
       </div>
@@ -205,9 +384,10 @@
     </div>
   </form>
   {% else %}
-  <div class="text-center text-success fw-semibold">
-    You have submitted the post-debate survey.
-  </div>
+<div id="alreadySubmittedMsg" class="mx-auto mt-0 p-3 rounded-3 text-center shadow-sm" style="max-width: 500px; background-color: #e6f4ea; border-left: 5px solid #198754; color: #198754;" data-aos="fade-up">
+  <i class="bi bi-check-circle-fill me-2"></i>
+  <span class="fw-semibold">You have already submitted the post-debate survey.</span>
+</div>
   {% endif %}
 </div>
 
@@ -229,15 +409,15 @@
       </div>
     </div>
   </div>
+
+
+</div>
 <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(255,255,255,0.7); z-index: 9999; display: flex; justify-content: center; align-items: center;">
+  background: rgba(255,255,255,0.7); z-index: 9999; justify-content: center; align-items: center;">
   <div class="spinner-border text-dark" role="status">
     <span class="visually-hidden">Loading...</span>
   </div>
 </div>
-
-</div>
-
 <script>
 async function loadPreSurveyChart() {
   const res = await fetch('/get-survey-data');
@@ -381,6 +561,8 @@ const editors = {};
       document.getElementById("alignmentResultPre").textContent =
         `Your pre-debate alignment is: ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}.`;
       document.getElementById("alignmentResultPre").style.display = "block";
+      document.getElementById("alignmentFormPre").style.display = "none";
+
     } else {
       alert("Failed to save pre alignment.");
     }
@@ -406,12 +588,13 @@ document.getElementById('alignmentFormPost')?.addEventListener('submit', functio
       document.getElementById("alignmentResultPost").textContent =
         `Your post-debate alignment is: ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}.`;
       document.getElementById("alignmentResultPost").style.display = "block";
+      document.getElementById("alignmentFormPost").style.display = "none";
     } else {
       alert("Failed to save post alignment.");
     }
   });
 });
-<script>
+
 function summarizeNote(week) {
   const html = editors[week].root.innerHTML;
   const overlay = document.getElementById("loadingOverlay");
@@ -444,5 +627,48 @@ function summarizeNote(week) {
 
 </script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.querySelectorAll('.nav-link.disabled').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    alert("Please complete the previous week's task first.");
+  });
+});
+</script>
+<script>
+document.querySelectorAll('.nav-link.disabled').forEach(btn => {
+  btn.addEventListener('click', e => {
+    e.preventDefault();
+    alert("Please complete the previous week's task first.");
+  });
+});
+
+// Initialize all tooltips
+const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
+tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
+</script>
+<script>
+function completeWeek(week) {
+  fetch(`/mark-week-complete/{{ debate_id }}/${week}`, {
+    method: "POST"
+  }).then(res => res.json()).then(data => {
+    if (data.status === "ok") {
+      alert(`You have completed ${week.toUpperCase()}. Reloading...`);
+      location.reload();
+    } else {
+      alert("Failed to mark week complete.");
+    }
+  });
+}
+
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
+<script>
+AOS.init({
+  duration: 800,
+  easing: 'ease-in-out',
+  once: true,
+});
+</script>
 </body>
 </html>
