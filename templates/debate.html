@@ -170,8 +170,29 @@
   </div>
 </div>
 
+<div class="card-custom mt-5">
+  <h5 class="section-title">Latest News About "{{ topic }}"</h5>
+  {% if news_articles %}
+    <ul class="list-group" id="newsList">
+      {% for article in news_articles %}
+        <li class="list-group-item news-item {% if loop.index > 5 %}d-none{% endif %}">
+          <a href="{{ article.url }}" target="_blank" class="fw-semibold">{{ article.title }}</a>
+          <div class="small text-muted">{{ article.source }} – {{ article.publishedAt[:10] }}</div>
+          <div class="text-muted">{{ article.description }}</div>
+        </li>
+      {% endfor %}
+    </ul>
+    <div class="text-center mt-3">
+      <button class="action-button btn-outline-secondary" id="loadMoreNewsBtn">Show More</button>
+    </div>
+  {% else %}
+    <p class="text-muted">No related news found.</p>
+  {% endif %}
+</div>
+
 
 </div>
+
 
 <div class="tab-wrapper">
 <ul class="nav nav-tabs" id="weekTabs" role="tablist">
@@ -669,6 +690,17 @@ AOS.init({
   easing: 'ease-in-out',
   once: true,
 });
+document.getElementById('loadMoreNewsBtn')?.addEventListener('click', function () {
+  const hiddenItems = document.querySelectorAll('.news-item.d-none');
+  const toShow = Array.from(hiddenItems).slice(0, 5); // Show 5 more
+  toShow.forEach(item => item.classList.remove('d-none'));
+
+  if (document.querySelectorAll('.news-item.d-none').length === 0) {
+    this.style.display = 'none';
+  }
+});
+</script>
+
 </script>
 </body>
 </html>
