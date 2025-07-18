@@ -275,8 +275,8 @@ def save_alignment(debate_id):
 @app.route('/')
 def index():
     return render_template('index.html')
-@app.route('/save-note/<week>', methods=['POST'])
-def save_note(week):
+@app.route('/save-note/<int:debate_id>/<week>', methods=['POST'])
+def save_note(debate_id, week):
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -285,24 +285,32 @@ def save_note(week):
 
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS notes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER,
+                debate_id INTEGER,
                 week TEXT,
                 content TEXT,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                UNIQUE(user_id, debate_id, week)
             )
         ''')
-        cursor.execute("INSERT INTO notes (user_id, week, content) VALUES (?, ?, ?)",
-                       (session['user_id'], week, html_content))
+
+        cursor.execute('''
+            INSERT INTO notes (user_id, debate_id, week, content)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id, debate_id, week)
+            DO UPDATE SET content = excluded.content, created_at = CURRENT_TIMESTAMP
+        ''', (session['user_id'], debate_id, week, html_content))
+
         conn.commit()
 
     return jsonify({"status": "Note saved"})
 
-
-@app.route('/summarize-note/<week>', methods=['POST'])
-def summarize_note(week):
+@app.route('/summarize-note/<int:debate_id>/<week>', methods=['POST'])
+def summarize_note(debate_id, week):
     if 'user_id' not in session:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -323,12 +331,17 @@ def summarize_note(week):
         )
         summary = response.choices[0].message.content.strip()
 
-        summarized_html = html_content + f"<p><strong>Summary:</strong> {summary}</p>"
+        summarized_html = html_content + f"<strong>Summary:</strong> {summary}</p>"
 
         with sqlite3.connect(DB_PATH) as conn:
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO notes (user_id, week, content) VALUES (?, ?, ?)",
-                           (session['user_id'], week, summarized_html))
+            cursor.execute('''
+                INSERT INTO notes (user_id, debate_id, week, content)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id, debate_id, week)
+                DO UPDATE SET content = excluded.content, created_at = CURRENT_TIMESTAMP
+            ''', (session['user_id'], debate_id, week, summarized_html))
+
             conn.commit()
 
         return jsonify({"summary": summary})
@@ -489,11 +502,13 @@ def debate(debate_id):
         # Assign group if not already assigned
         cursor.execute("SELECT group_name FROM user_group WHERE user_id = ? AND debate_id = ?", (user_id, debate_id))
         result = cursor.fetchone()
+        first_assignment = False
         if not result:
             group_name = random.choice(["support", "oppose"])
             cursor.execute("INSERT INTO user_group (user_id, debate_id, group_name) VALUES (?, ?, ?)",
                            (user_id, debate_id, group_name))
             conn.commit()
+            first_assignment = True
         else:
             group_name = result[0]
 
@@ -539,17 +554,29 @@ def debate(debate_id):
         image = 'images/login_bg.jpg'
     else:
         image = 'debate_images/'+image
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT week, content FROM notes
+            WHERE user_id = ? AND debate_id = ?
+        ''', (user_id, debate_id))
+        notes = cursor.fetchall()
+        saved_notes = {row[0]: row[1] for row in notes} if notes else {}
+
     return render_template(
         "debate.html",
         debate_id=debate_id,
         topic=topic,
         country=country,
         date=date,
+        saved_notes=saved_notes,
         is_admin=is_admin_flag,
         left_group=left_group,
         right_group=right_group,
         alignment_pre=alignment_pre,
         alignment_post=alignment_post,
+        group_name=group_name,
+        first_assignment=first_assignment,
         pre_submitted=pre_submitted,
         post_submitted=post_submitted,
         week1_done=week1_done,
@@ -760,10 +787,19 @@ def view_debate(debate_id):
     submitted_week1 = has_submitted('pre')
     submitted_week2 = has_submitted('week2')
 
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT week, content FROM notes
+            WHERE user_id = ? AND debate_id = ?
+        ''', (user_id, debate_id))
+        saved_notes = {row[0]: row[1] for row in cursor.fetchall()}
+
     return render_template('debate_view.html',
                            topic=topic,
                            country=country,
                            date=date,
+                           saved_notes=saved_notes,
                            pre_data=pre_data,
                            post_data=post_data,
                            notes=notes,

@@ -439,6 +439,27 @@
     <span class="visually-hidden">Loading...</span>
   </div>
 </div>
+
+<!-- First-Time Assignment Modal -->
+<div class="modal fade" id="groupAssignmentModal" tabindex="-1" aria-labelledby="groupAssignmentLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content text-center">
+      <div class="modal-header">
+        <h5 class="modal-title w-100" id="groupAssignmentLabel">You're Assigned!</h5>
+      </div>
+      <div class="modal-body">
+        You have been assigned to the <strong id="assignedGroupText"></strong> group for this debate.
+      </div>
+      <div class="modal-footer justify-content-center">
+        <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const debateId = {{ debate_id }};
+</script>
 <script>
 async function loadPreSurveyChart() {
   const res = await fetch('/get-survey-data');
@@ -554,12 +575,21 @@ document.getElementById('postSurveyForm')?.addEventListener('submit', function (
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script>
 const editors = {};
+const savedNotes = {{ saved_notes | tojson | safe }};
+
 ['week1', 'week2', 'week3'].forEach(week => {
   editors[week] = new Quill(`#editor-${week}`, {
     theme: 'snow',
     placeholder: `Write your ${week === 'week1' ? 'preparation' : week === 'week2' ? 'discussion' : 'final discussion'} notes...`,
-    modules: { toolbar: [['bold', 'italic', 'underline'], ['link'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']] }
+    modules: {
+      toolbar: [['bold', 'italic', 'underline'], ['link'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']]
+    }
   });
+
+  // If a note was saved for this week, insert it
+  if (savedNotes[week]) {
+    editors[week].clipboard.dangerouslyPasteHTML(savedNotes[week]);
+  }
 });
 </script>
 <script>document.getElementById('alignmentFormPre')?.addEventListener('submit', function (e) {
@@ -615,38 +645,43 @@ document.getElementById('alignmentFormPost')?.addEventListener('submit', functio
     }
   });
 });
-
 function summarizeNote(week) {
   const html = editors[week].root.innerHTML;
-  const overlay = document.getElementById("loadingOverlay");
-  overlay.style.display = "flex";
 
-  fetch(`/summarize-note/${week}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ html })
+  // Show loading overlay
+  document.getElementById("loadingOverlay").style.display = "flex";
+
+  fetch(`/summarize-note/${debateId}/${week}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html })
   })
-  .then(res => res.json())
+  .then(response => response.json())
   .then(data => {
-    overlay.style.display = "none";
     if (data.summary) {
-      alert("Summary added below your note.");
-      // Append summary to the editor content visually (optional)
       editors[week].clipboard.dangerouslyPasteHTML(
-        `<p><strong>Summary:</strong> ${data.summary}</p>`, 'api'
+        editors[week].getLength() - 1,
+        `<br><p><strong>Summary:</strong> ${data.summary}</p>`
       );
-    } else {
-      alert("Summarization failed.");
+    } else if (data.error) {
+      alert("Error: " + data.error);
     }
   })
-  .catch(() => {
-    overlay.style.display = "none";
-    alert("An error occurred while summarizing the note.");
+  .catch(error => {
+    alert("Request failed.");
+    console.error(error);
+  })
+  .finally(() => {
+    // Hide loading overlay
+    document.getElementById("loadingOverlay").style.display = "none";
   });
 }
+
 </script>
 
 </script>
+
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.querySelectorAll('.nav-link.disabled').forEach(btn => {
@@ -699,6 +734,46 @@ document.getElementById('loadMoreNewsBtn')?.addEventListener('click', function (
     this.style.display = 'none';
   }
 });
+</script>
+<script>
+function submitNote(week) {
+  const html = editors[week].root.innerHTML;
+
+  fetch(`/save-note/${debateId}/${week}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html: html })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === "Note saved") {
+      alert("Note saved successfully.");
+    } else {
+      alert("Failed to save note.");
+    }
+  })
+  .catch(error => {
+    alert("Error while saving note.");
+    console.error(error);
+  });
+}
+</script>
+<script>
+  const firstAssigned = {{ 'true' if first_assignment else 'false' }};
+  const groupName = "{{ group_name }}";
+
+  if (firstAssigned === true || firstAssigned === 'true') {
+    document.addEventListener('DOMContentLoaded', () => {
+      const groupText = document.getElementById('assignedGroupText');
+      if (groupName === 'support') {
+        groupText.innerHTML = '<span class="text-success">Support</span>';
+      } else {
+        groupText.innerHTML = '<span class="text-danger">Oppose</span>';
+      }
+      const modal = new bootstrap.Modal(document.getElementById('groupAssignmentModal'));
+      modal.show();
+    });
+  }
 </script>
 
 </script>
