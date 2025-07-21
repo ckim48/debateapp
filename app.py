@@ -5,7 +5,7 @@ import os
 import random
 from bs4 import BeautifulSoup
 from openai import OpenAI
-
+import requests
 
 
 app = Flask(__name__)
@@ -14,6 +14,26 @@ DB_PATH = 'biasbridge.db'
 UPLOAD_FOLDER = 'static/debate_images'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+
+def fetch_news(topic):
+    url = f"https://newsapi.org/v2/everything?q={topic}&language=en&sortBy=publishedAt&pageSize=10&apiKey={NEWS_API_KEY}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        articles = data.get('articles', [])
+        return [
+            {
+                'title': article['title'],
+                'url': article['url'],
+                'description': article['description'],
+                'publishedAt': article['publishedAt'],
+                'source': article['source']['name']
+            }
+            for article in articles
+        ]
+    return []
 
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
@@ -562,7 +582,7 @@ def debate(debate_id):
         ''', (user_id, debate_id))
         notes = cursor.fetchall()
         saved_notes = {row[0]: row[1] for row in notes} if notes else {}
-
+    news_articles = fetch_news(topic)
     return render_template(
         "debate.html",
         debate_id=debate_id,
@@ -572,6 +592,7 @@ def debate(debate_id):
         saved_notes=saved_notes,
         is_admin=is_admin_flag,
         left_group=left_group,
+        news_articles=news_articles,
         right_group=right_group,
         alignment_pre=alignment_pre,
         alignment_post=alignment_post,
@@ -754,11 +775,14 @@ def view_debate(debate_id):
         pre_data = get_counts('pre')
         post_data = get_counts('post')
 
-        # Notes
-        cursor.execute("SELECT user_id, content, created_at FROM notes WHERE week IN ('week1', 'week2', 'week3') AND user_id IN (SELECT user_id FROM surveys WHERE debate_id = ?)", (debate_id,))
+        # Only fetch current user's notes
+        cursor.execute("""
+            SELECT week, content, created_at FROM notes
+            WHERE debate_id = ? AND user_id = ?
+        """, (debate_id, user_id))
         notes = cursor.fetchall()
 
-        # Fetch user's submitted surveys
+        # User's submitted surveys
         cursor.execute("SELECT comment, stance FROM surveys WHERE user_id = ? AND debate_id = ? AND phase = 'pre'", (user_id, debate_id))
         user_pre_survey = cursor.fetchone()
 
@@ -779,21 +803,19 @@ def view_debate(debate_id):
         alignment_post = cursor.fetchone()
         alignment_post = alignment_post[0] if alignment_post else None
 
-    def has_submitted(phase):
-        cursor.execute("SELECT 1 FROM surveys WHERE user_id = ? AND phase = ? AND debate_id = ?",
-                       (user_id, phase, debate_id))
-        return cursor.fetchone() is not None
+        # Check if user submitted surveys
+        def has_submitted(phase):
+            cursor.execute("SELECT 1 FROM surveys WHERE user_id = ? AND phase = ? AND debate_id = ?", (user_id, phase, debate_id))
+            return cursor.fetchone() is not None
 
-    submitted_week1 = has_submitted('pre')
-    submitted_week2 = has_submitted('week2')
+        submitted_week1 = has_submitted('pre')
+        submitted_week2 = has_submitted('week2')
 
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            SELECT week, content FROM notes
-            WHERE user_id = ? AND debate_id = ?
-        ''', (user_id, debate_id))
-        saved_notes = {row[0]: row[1] for row in cursor.fetchall()}
+        # User's saved notes dict
+        saved_notes = {row[0]: row[1] for row in notes}
+
+    # Fetch latest news using News API
+    news_articles = fetch_news(topic)
 
     return render_template('debate_view.html',
                            topic=topic,
@@ -807,11 +829,14 @@ def view_debate(debate_id):
                            user_pre_survey=user_pre_survey,
                            user_post_survey=user_post_survey,
                            user_mid_survey=user_mid_survey,
-                            submitted_week1=submitted_week1,
-                            submitted_week2=submitted_week2,
+                           submitted_week1=submitted_week1,
+                           submitted_week2=submitted_week2,
                            alignment_result=alignment_result[0] if alignment_result else None,
                            alignment_pre=alignment_pre,
-                           alignment_post=alignment_post)
+                           alignment_post=alignment_post,
+                           news_articles=news_articles)
+
+
 
 
 
