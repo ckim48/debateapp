@@ -6,7 +6,7 @@ import random
 from bs4 import BeautifulSoup
 from openai import OpenAI
 import requests
-
+import pandas as pd
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -16,24 +16,95 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
+def generate_central_view(topic):
+    try:
+        response = client.chat.completions.create(
+            model="gpt-4",
+            messages=[
+                {"role": "system", "content": "You are a neutral political analyst."},
+                {"role": "user", "content": f"Write a balanced and objective paragraph explaining the central view on the topic: '{topic}'."}
+            ],
+            temperature=0.5
+        )
+        return response.choices[0].message.content.strip()
+    except Exception as e:
+        print("Central view generation failed:", e)
+        return "Central view is not available at the moment."
 
-def fetch_news(topic):
-    url = f"https://newsapi.org/v2/everything?q={topic}&language=en&sortBy=publishedAt&pageSize=10&apiKey={NEWS_API_KEY}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        data = response.json()
-        articles = data.get('articles', [])
-        return [
-            {
-                'title': article['title'],
-                'url': article['url'],
-                'description': article['description'],
-                'publishedAt': article['publishedAt'],
-                'source': article['source']['name']
-            }
-            for article in articles
-        ]
-    return []
+import re
+def expand_topic_for_search(topic, debate_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT search_keywords FROM debates WHERE id = ?", (debate_id,))
+        row = cursor.fetchone()
+
+        if row and row[0]:
+            return row[0]  # return cached keywords
+
+    # If not cached, generate using GPT
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {
+                    "role": "system",
+                    "content": "You generate related keywords for a news search query."
+                },
+                {
+                    "role": "user",
+                    "content": f"List keywords related to this topic for news search. Only comma-separated keywords, no numbering: {topic}"
+                }
+            ],
+            temperature=0.5
+        )
+        content = response.choices[0].message.content
+        phrases = re.split(r'[,\n]', content)
+        words = set()
+        for phrase in phrases:
+            for word in phrase.strip().split():
+                clean = re.sub(r'\W+', '', word).lower()
+                if clean:
+                    words.add(clean)
+
+        search_query = " OR ".join(words)
+
+        # Cache the result
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("UPDATE debates SET search_keywords = ? WHERE id = ?", (search_query, debate_id))
+            conn.commit()
+
+        return search_query
+    except Exception as e:
+        print("Failed to expand topic:", e)
+        return topic
+def fetch_news(topic, debate_id):
+    search_query = expand_topic_for_search(topic, debate_id)
+    url = f"https://newsapi.org/v2/everything?q={search_query}&language=en&sortBy=relevancy&pageSize=15&apiKey={NEWS_API_KEY}"
+
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()
+            articles = data.get('articles', [])
+            return [
+                {
+                    'title': article['title'],
+                    'url': article['url'],
+                    'description': article['description'],
+                    'publishedAt': article['publishedAt'],
+                    'source': article['source']['name']
+                }
+                for article in articles
+            ]
+        else:
+            print(f"NewsAPI Error: {response.status_code} - {response.text}")
+            return []
+    except Exception as e:
+        print("Error fetching news:", e)
+        return []
+
+
 
 def init_db():
     with sqlite3.connect(DB_PATH) as conn:
@@ -192,8 +263,18 @@ def init_db():
                     ("Presidential Impeachment", "South Korea", "2025.03.10")
                 ]
             )
-
+        cursor.execute("PRAGMA table_info(debates)")
+        columns = [col[1] for col in cursor.fetchall()]
+        if 'central_view' not in columns:
+            cursor.execute("ALTER TABLE debates ADD COLUMN central_view TEXT")
         conn.commit()
+        with sqlite3.connect(DB_PATH) as conn:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(debates)")
+            columns = [col[1] for col in cursor.fetchall()]
+            if 'search_keywords' not in columns:
+                cursor.execute("ALTER TABLE debates ADD COLUMN search_keywords TEXT")
+            conn.commit()
 
 
 def is_admin():
@@ -378,7 +459,7 @@ def register():
         password = request.form['password']
 
         if get_user_by_username(username):
-            flash("Username already exists.")
+            flash("Email already exists.")
             return redirect(url_for('register'))
 
         hashed_password = generate_password_hash(password)
@@ -507,7 +588,7 @@ def debate(debate_id):
         return redirect(url_for("login"))
 
     user_id = session["user_id"]
-
+    alignment_questions = load_alignment_questions()
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
 
@@ -540,6 +621,16 @@ def debate(debate_id):
             WHERE g.debate_id = ? AND g.group_name = 'support'
         ''', (debate_id,))
         left_group = [{'name': row[1], 'email': row[0]} for row in cursor.fetchall()]
+        if not row[4]:  # image is at index 4, so fetch central_view explicitly
+            cursor.execute("SELECT central_view FROM debates WHERE id = ?", (debate_id,))
+            central_view_paragraph = cursor.fetchone()[0]
+
+        is_generating_view = False
+        if not central_view_paragraph:
+            is_generating_view = True
+            central_view_paragraph = generate_central_view(topic)
+            cursor.execute("UPDATE debates SET central_view = ? WHERE id = ?", (central_view_paragraph, debate_id))
+            conn.commit()
 
         # Get group members (oppose)
         cursor.execute('''
@@ -582,7 +673,8 @@ def debate(debate_id):
         ''', (user_id, debate_id))
         notes = cursor.fetchall()
         saved_notes = {row[0]: row[1] for row in notes} if notes else {}
-    news_articles = fetch_news(topic)
+    news_articles = fetch_news(topic, debate_id)
+
     return render_template(
         "debate.html",
         debate_id=debate_id,
@@ -590,9 +682,11 @@ def debate(debate_id):
         country=country,
         date=date,
         saved_notes=saved_notes,
+        central_view=central_view_paragraph,
         is_admin=is_admin_flag,
         left_group=left_group,
         news_articles=news_articles,
+        is_generating_view=is_generating_view,
         right_group=right_group,
         alignment_pre=alignment_pre,
         alignment_post=alignment_post,
@@ -602,6 +696,7 @@ def debate(debate_id):
         post_submitted=post_submitted,
         week1_done=week1_done,
         week2_done=week2_done,
+        alignment_questions=alignment_questions,
         debate_image= image
     )
 
@@ -720,7 +815,10 @@ def get_survey_data():
         "post": [post['support'], post['oppose'], post['neutral']]
     })
 
-
+def load_alignment_questions():
+    df = pd.read_csv("static/sa_questions.csv")
+    df = df[:7]
+    return df.to_dict(orient='records')
 @app.route('/comment', methods=['POST'])
 def submit_comment():
     if 'user_id' not in session:
@@ -815,12 +913,15 @@ def view_debate(debate_id):
         saved_notes = {row[0]: row[1] for row in notes}
 
     # Fetch latest news using News API
-    news_articles = fetch_news(topic)
+    news_articles = fetch_news(topic, debate_id)
+    cursor.execute("SELECT central_view FROM debates WHERE id = ?", (debate_id,))
+    central_view = cursor.fetchone()[0]
 
     return render_template('debate_view.html',
                            topic=topic,
                            country=country,
                            date=date,
+                           central_view=central_view,
                            saved_notes=saved_notes,
                            pre_data=pre_data,
                            post_data=post_data,
@@ -842,4 +943,4 @@ def view_debate(debate_id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(debug=True)
+    app.run(debug=True,port = 8080)

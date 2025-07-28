@@ -190,7 +190,10 @@
   {% endif %}
 </div>
 
-
+<div class="card-custom mt-4" data-aos="fade-up">
+  <h5 class="section-title">Central View on the Topic</h5>
+  <p class="text-muted" style="font-size: 1.05rem;">{{ central_view }}</p>
+</div>
 </div>
 
 
@@ -240,27 +243,36 @@
   <div class="tab-content mt-4">
     <!-- WEEK 1 -->
     <div class="tab-pane fade show active" id="week1">
+      <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
+        <h5 class=""><strong>Week 1: Preparation Phase</strong></h5>
+        <ul class="mb-0">
+          <li>Discuss with your teammates and plan your strategy.</li>
+          <li>Read the recommended news articles and the AI's viewpoint.</li>
+          <li>Complete the <strong>Political Alignment Test AND Pre-Debate Survey</strong>.</li>
+          <li>Write your preparation notes using the editor provided.</li>
+        </ul>
+      </div>
       <div class="card-custom mb-4">
         <h5 class="section-title">Political Alignment Test</h5>
         {% if not alignment_pre %}
-        <form id="alignmentFormPre">
-          <p class="text-muted">Answer the following to determine your general alignment.</p>
-          <div class="mb-3">
-            <label class="form-label">Q1: Government should regulate the economy more strictly.</label>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="left"><label class="form-check-label">Agree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="right"><label class="form-check-label">Disagree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="center"><label class="form-check-label">Neutral</label></div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Q2: Individual freedom should be prioritized over social equality.</label>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="right"><label class="form-check-label">Agree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="left"><label class="form-check-label">Disagree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="center"><label class="form-check-label">Neutral</label></div>
-          </div>
-          <div class="text-end">
-            <button class="action-button" type="submit">Check Alignment</button>
-          </div>
-        </form>
+<form id="alignmentFormPre">
+  <p class="text-muted">Answer the following to determine your general alignment.</p>
+  {% for q in alignment_questions %}
+    <div class="mb-3">
+      <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
+      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="1"> <label class="form-check-label">Strongly Disagree</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="2"> <label class="form-check-label">Disagree</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="3"> <label class="form-check-label">Neutral</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="4"> <label class="form-check-label">Agree</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="5"> <label class="form-check-label">Strongly Agree</label></div>
+    </div>
+  {% endfor %}
+  <div class="text-end">
+    <button class="action-button" type="submit">Check Alignment</button>
+  </div>
+</form>
+
+
       <div id="alignmentResultPre" class="text-center mt-3 fw-bold" style="display: none;"></div>
       {% else %}
       <div id="alignmentResultPre" class="text-center p-1">
@@ -315,8 +327,9 @@
         <h5 class="section-title">Preparation Note</h5>
         <div id="editor-week1"></div>
         <div class="text-end mt-2">
-          <button class="action-button" onclick="submitNote('week1')">Save Note</button>
           <button class="action-button btn-outline-light" onclick="summarizeNote('week1')">Summarize</button>
+
+          <button class="action-button" onclick="submitNote('week1')">Save Note</button>
         </div>
       </div>
       {% if is_admin %}
@@ -329,16 +342,25 @@
 
     <!-- WEEK 2 -->
     <div class="tab-pane fade" id="week2">
-      <div class="card-custom text-center">
-        <h5 class="section-title">Debate Discussion</h5>
-        <p class="text-muted">Please refer to your notes and engage in meaningful discussion this week.</p>
-      </div>
+    <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
+      <h5 class=""><strong>Week 2: Debate Session</strong></h5>
+      <ul class="mb-0">
+        <li>Engage in live debate against the other team.</li>
+        <li>Use the notes editor to record key points during discussion.</li>
+        <li>Focus on critical thinking and respectful argument.</li>
+      </ul>
+    </div>
+<!--      <div class="card-custom text-center">-->
+<!--        <h5 class="section-title">Debate Discussion</h5>-->
+<!--        <p class="text-muted">Please refer to your notes and engage in meaningful discussion this week.</p>-->
+<!--      </div>-->
       <div class="card-custom">
         <h5 class="section-title">Discussion Note</h5>
         <div id="editor-week2"></div>
         <div class="text-end mt-2">
-          <button class="action-button" onclick="submitNote('week2')">Save Note</button>
           <button class="action-button btn-outline-light" onclick="summarizeNote('week2')">Summarize</button>
+
+          <button class="action-button" onclick="submitNote('week2')">Save Note</button>
         </div>
       </div>
       {% if is_admin %}
@@ -350,28 +372,36 @@
 
     <!-- WEEK 3 -->
     <div class="tab-pane fade" id="week3">
+      <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
+  <h5 class="e"><strong>Week 3: Wrap-up & Reflection</strong></h5>
+  <ul class="mb-0">
+    <li>Reflect on your team's performance—revenge if needed!</li>
+    <li>Write your final wrap-up notes summarizing the experience.</li>
+    <li>Complete the <strong>Political Alignment Test AND Post-Debate Survey</strong>.</li>
+  </ul>
+</div>
       <div class="card-custom mb-4">
         <h5 class="section-title">Political Alignment Test</h5>
         {% if not alignment_post %}
 
-        <form id="alignmentFormPost">
-          <p class="text-muted">Answer the following to determine your general alignment.</p>
-          <div class="mb-3">
-            <label class="form-label">Q1: Government should regulate the economy more strictly.</label>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="left"><label class="form-check-label">Agree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="right"><label class="form-check-label">Disagree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q1" value="center"><label class="form-check-label">Neutral</label></div>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Q2: Individual freedom should be prioritized over social equality.</label>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="right"><label class="form-check-label">Agree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="left"><label class="form-check-label">Disagree</label></div>
-            <div class="form-check"><input class="form-check-input" type="radio" name="q2" value="center"><label class="form-check-label">Neutral</label></div>
-          </div>
-          <div class="text-end">
-            <button class="action-button" type="submit">Check Alignment</button>
-          </div>
-        </form>
+<form id="alignmentFormPost">
+  <p class="text-muted">Answer the following to determine your general alignment.</p>
+  {% for q in alignment_questions %}
+    <div class="mb-3">
+      <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
+      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="1"> <label class="form-check-label">Strongly Disagree</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="2"> <label class="form-check-label">Disagree</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="3"> <label class="form-check-label">Neutral</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="4"> <label class="form-check-label">Agree</label></div>
+      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="5"> <label class="form-check-label">Strongly Agree</label></div>
+    </div>
+  {% endfor %}
+  <div class="text-end">
+    <button class="action-button" type="submit">Check Alignment</button>
+  </div>
+</form>
+
+
 <div id="alignmentResultPost" class="text-center mt-3 fw-bold" style="display: none;"></div>
 {% else %}
 <div id="alignmentResultPost" class="mx-auto mt-4 p-4 rounded-4 text-center shadow-sm" style="max-width: 500px; border-left: 6px solid #6f42c1; background-color: #f6f2fc;" data-aos="fade-up">
@@ -424,8 +454,9 @@
         <h5 class="section-title">Final Discussion Note</h5>
         <div id="editor-week3"></div>
         <div class="text-end mt-2">
-          <button class="action-button" onclick="submitNote('week3')">Save Note</button>
           <button class="action-button btn-outline-light" onclick="summarizeNote('week3')">Summarize</button>
+
+          <button class="action-button" onclick="submitNote('week3')">Save Note</button>
         </div>
       </div>
     </div>
@@ -521,11 +552,22 @@ document.getElementById('preSurveyForm')?.addEventListener('submit', function (e
       wrapper.style.display = "none";
 
       // Dynamically insert the message
-      const msg = document.createElement("div");
-      msg.id = "alreadySubmittedMsg";
-      msg.className = "text-center text-success fw-semibold mt-2";
-      msg.textContent = "You have submitted the pre-debate survey.";
-      wrapper.parentNode.appendChild(msg);
+const msg = document.createElement("div");
+msg.id = "alreadySubmittedMsg";
+msg.className = "mx-auto mt-0 p-3 rounded-3 text-center shadow-sm";
+msg.style.maxWidth = "500px";
+msg.style.backgroundColor = "#e6f4ea";
+msg.style.borderLeft = "5px solid #198754";
+msg.style.color = "#198754";
+msg.setAttribute("data-aos", "fade-up");
+
+msg.innerHTML = `
+  <i class="bi bi-check-circle-fill me-2"></i>
+  <span class="fw-semibold">You have already submitted the pre-debate survey.</span>
+`;
+
+wrapper.parentNode.appendChild(msg);
+
 
       // Load chart and scroll
       loadPreSurveyChart();
@@ -552,13 +594,25 @@ document.getElementById('postSurveyForm')?.addEventListener('submit', function (
     if (data.status === "ok" || data.status === "duplicate") {
       // Hide the post-survey form
       const postForm = document.getElementById("postSurveyForm");
-      postForm.style.display = "none";
+postForm.style.display = "none";
 
-      // Inject confirmation message
-      const msg = document.createElement("div");
-      msg.className = "text-center text-success fw-semibold mt-2";
-      msg.textContent = "You have submitted the post-debate survey.";
+// Inject confirmation message right after the form
+const msg = document.createElement("div");
+msg.id = "postSurveySubmittedMsg";
+      msg.className = "mx-auto mt-0 p-3 rounded-3 text-center shadow-sm";
+      msg.style.maxWidth = "500px";
+      msg.style.backgroundColor = "#e6f4ea";
+      msg.style.borderLeft = "5px solid #198754";
+      msg.style.color = "#198754";
+      msg.setAttribute("data-aos", "fade-up");
+
+      msg.innerHTML = `
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span class="fw-semibold">You have already submitted the post-debate survey.</span>
+      `;
+
       postForm.parentNode.appendChild(msg);
+
 
       // Load chart and scroll to it
       loadPostSurveyChart();
@@ -592,43 +646,56 @@ const savedNotes = {{ saved_notes | tojson | safe }};
   }
 });
 </script>
-<script>document.getElementById('alignmentFormPre')?.addEventListener('submit', function (e) {
+<script>
+document.getElementById('alignmentFormPre')?.addEventListener('submit', function (e) {
   e.preventDefault();
-  const responses = ['q1', 'q2'].map(q =>
-    document.querySelector(`input[name="${q}"]:checked`)?.value
-  );
-  if (responses.includes(undefined)) return alert("Please answer all alignment questions.");
+  const form = e.target;
+  const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked'))
+    .map(input => parseInt(input.value));
 
-  const count = { left: 0, center: 0, right: 0 };
-  responses.forEach(r => count[r]++);
-  const alignment = Object.entries(count).sort((a, b) => b[1] - a[1])[0][0];
+  if (responses.length !== {{ alignment_questions | length }}) {
+    alert("Please answer all alignment questions.");
+    return;
+  }
+
+  const score = responses.reduce((a, b) => a + b, 0);
+  const average = score / responses.length;
+
+  let alignment;
+  if (average <= 2.4) alignment = "left";
+  else if (average >= 3.6) alignment = "right";
+  else alignment = "center";
 
   fetch(`/save-alignment/{{ debate_id }}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ alignment, phase: 'pre' })
+    body: JSON.stringify({ alignment: alignment, phase: 'pre' })
   }).then(res => {
-    if (res.ok) {
-      document.getElementById("alignmentResultPre").textContent =
-        `Your pre-debate alignment is: ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}.`;
-      document.getElementById("alignmentResultPre").style.display = "block";
-      document.getElementById("alignmentFormPre").style.display = "none";
-
-    } else {
-      alert("Failed to save pre alignment.");
-    }
+    if (res.ok) location.reload();
+    else alert("Failed to save alignment.");
   });
 });
+
+
+
 document.getElementById('alignmentFormPost')?.addEventListener('submit', function (e) {
   e.preventDefault();
-  const responses = ['q1', 'q2'].map(q =>
-    document.querySelector(`#week3 input[name="${q}"]:checked`)?.value
-  );
-  if (responses.includes(undefined)) return alert("Please answer all alignment questions.");
+  const postForm = document.getElementById("alignmentFormPost");
+  const responses = Array.from(postForm.querySelectorAll('input[type="radio"]:checked'))
+    .map(input => parseInt(input.value));
 
-  const count = { left: 0, center: 0, right: 0 };
-  responses.forEach(r => count[r]++);
-  const alignment = Object.entries(count).sort((a, b) => b[1] - a[1])[0][0];
+  if (responses.length !== {{ alignment_questions|length }}) {
+    alert("Please answer all alignment questions.");
+    return;
+  }
+
+  const score = responses.reduce((a, b) => a + b, 0);
+  const avg = score / responses.length;
+
+  let alignment;
+  if (avg <= 2.4) alignment = 'left';
+  else if (avg >= 3.6) alignment = 'right';
+  else alignment = 'center';
 
   fetch(`/save-alignment/{{ debate_id }}`, {
     method: "POST",
@@ -636,8 +703,12 @@ document.getElementById('alignmentFormPost')?.addEventListener('submit', functio
     body: JSON.stringify({ alignment, phase: 'post' })
   }).then(res => {
     if (res.ok) {
-      document.getElementById("alignmentResultPost").textContent =
-        `Your post-debate alignment is: ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}.`;
+      document.getElementById("alignmentResultPost").innerHTML = `
+        <h5 class="mb-2">Your Post-Debate Alignment</h5>
+        <div class="fs-4 fw-bold" style="color: #6f42c1;">
+          ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}
+        </div>
+      `;
       document.getElementById("alignmentResultPost").style.display = "block";
       document.getElementById("alignmentFormPost").style.display = "none";
     } else {
@@ -645,6 +716,7 @@ document.getElementById('alignmentFormPost')?.addEventListener('submit', functio
     }
   });
 });
+
 function summarizeNote(week) {
   const html = editors[week].root.innerHTML;
 
@@ -777,5 +849,52 @@ function submitNote(week) {
 </script>
 
 </script>
+<!-- Grayscale Floating Help Icon -->
+<button class="btn shadow" id="helpBtn"
+  style="position: fixed; bottom: 20px; right: 20px; width: 52px; height: 52px;
+         background-color: #6c757d; color: white; border-radius: 50%; z-index: 1050;"
+  data-bs-toggle="modal" data-bs-target="#instructionModal">
+  <i class="bi bi-question-lg fs-4"></i>
+</button>
+<!-- Grayscale Instruction Modal -->
+<div class="modal fade" id="instructionModal" tabindex="-1" aria-labelledby="instructionModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title fw-bold text-dark" id="instructionModalLabel">Debate Instructions by Week</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body px-4">
+        <div class="mb-4">
+          <h6 class="fw-semibold">Week 1 – Preparation</h6>
+          <ul class="text-muted">
+            <li>Discuss with your teammates and plan your strategy.</li>
+            <li>Read the latest news articles and the AI's central view.</li>
+            <li>Write preparation notes using the editor provided.</li>
+            <li>Complete the <strong>Pre-Debate Survey</strong>.</li>
+          </ul>
+        </div>
+        <div class="mb-4">
+          <h6 class="fw-semibold">Week 2 – Debate</h6>
+          <ul class="text-muted">
+            <li>Participate in the live debate against the other team.</li>
+            <li>Use the notes editor to document key arguments.</li>
+            <li>Collaborate with your team to refine your position.</li>
+          </ul>
+        </div>
+        <div>
+          <h6 class="fw-semibold">Week 3 – Wrap-Up</h6>
+          <ul class="text-muted">
+            <li>Reflect on the debate outcomes—retaliate if needed.</li>
+            <li>Write final wrap-up notes summarizing the experience.</li>
+            <li>Complete the <strong>Post-Debate Survey</strong>.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
 </body>
 </html>

@@ -47,13 +47,7 @@
     <div class="card p-5 bg-white">
       <h3 class="mb-4 text-center">Create New Debate</h3>
 
-      {% with messages = get_flashed_messages() %}
-        {% if messages %}
-          <div class="alert alert-warning text-center">
-            {{ messages[0] }}
-          </div>
-        {% endif %}
-      {% endwith %}
+
 
       <form method="POST" enctype="multipart/form-data">
         <div class="mb-3">

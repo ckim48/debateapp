@@ -74,6 +74,10 @@
       from { opacity: 0; transform: translateY(10px); }
       to { opacity: 1; transform: translateY(0); }
     }
+    canvas {
+  max-height: 280px;
+}
+
   </style>
 </head>
 <body>
@@ -89,20 +93,31 @@
 
 {% if news_articles %}
 <div class="container mb-5">
-  <h5 class="section-title mb-4">Latest News About the topic</h5>
-  <ul class="list-group">
+  <h5 class="section-title mb-4">Latest News About the Topic</h5>
+  <ul class="list-group" id="newsList">
     {% for article in news_articles %}
-      <li class="list-group-item">
+      <li class="list-group-item news-item {% if loop.index > 5 %}d-none extra-news{% endif %}">
         <a href="{{ article.url }}" target="_blank" class="fw-semibold">{{ article.title }}</a>
         <div class="small text-muted">{{ article.source }} – {{ article.publishedAt }}</div>
         <div>{{ article.description }}</div>
       </li>
     {% endfor %}
   </ul>
+  {% if news_articles|length > 5 %}
+    <div class="text-center mt-3">
+      <button id="toggleNewsBtn" class="btn btn-outline-secondary btn-sm">View More</button>
+    </div>
+  {% endif %}
 </div>
-{% else %}
+{% endif %}
+
+
+{% if central_view %}
 <div class="container mb-4">
-  <p class="text-muted text-center">No recent news found for "{{ topic }}".</p>
+<div class="card-custom mt-4" data-aos="fade-up">
+  <h5 class="section-title">Central View on the Topic</h5>
+  <p class="text-muted" style="font-size: 1.05rem;">{{ central_view }}</p>
+</div>
 </div>
 {% endif %}
 
@@ -114,6 +129,8 @@
   </ul>
 
   <div class="tab-content mt-4">
+
+
     <div class="tab-pane fade show active" id="week1">
       {% if alignment_result %}
         <div class="alert alert-info text-center">
@@ -226,22 +243,64 @@
   const preCtx = document.getElementById('preChart');
   const postCtx = document.getElementById('postChart');
 
+const baseOptions = {
+  indexAxis: 'y',
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: { display: false },
+    tooltip: {
+      backgroundColor: '#343a40',
+      titleColor: '#fff',
+      bodyColor: '#fff',
+      borderColor: '#dee2e6',
+      borderWidth: 1
+    }
+  },
+  scales: {
+    x: {
+      beginAtZero: true,
+      ticks: {
+        stepSize: 1,
+        precision: 0,
+        font: { size: 13 },
+        color: '#495057'
+      },
+      grid: { color: '#dee2e6' }
+    },
+    y: {
+      ticks: {
+        font: { size: 13 },
+        color: '#495057'
+      },
+      grid: { color: '#f1f3f5' }
+    }
+  },
+  animation: {
+    duration: 800,
+    easing: 'easeOutQuart'
+  }
+};
+
+
+  const chartColors = ['rgba(76, 175, 80, 0.7)', 'rgba(244, 67, 54, 0.7)'];
+  const borderColors = ['#4CAF50', '#F44336'];
+
   if (preCtx) {
     new Chart(preCtx, {
       type: 'bar',
       data: {
-        labels: ['Support', 'Oppose', 'Neutral'],
+        labels: ['Support', 'Oppose'],
         datasets: [{
-          label: 'Pre-Debate',
-          data: {{ pre_data | safe }},
-          backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
+          data: {{ pre_data[:2] | safe }},
+          backgroundColor: chartColors,
+          borderColor: borderColors,
+          borderWidth: 1,
+          borderRadius: 6,
+          barThickness: 30
         }]
       },
-      options: {
-        indexAxis: 'y',
-        scales: { x: { beginAtZero: true } },
-        responsive: true
-      }
+      options: baseOptions
     });
   }
 
@@ -249,21 +308,54 @@
     new Chart(postCtx, {
       type: 'bar',
       data: {
-        labels: ['Support', 'Oppose', 'Neutral'],
+        labels: ['Support', 'Oppose'],
         datasets: [{
-          label: 'Post-Debate',
-          data: {{ post_data | safe }},
-          backgroundColor: ['#4CAF50', '#F44336', '#FFC107']
+          data: {{ post_data[:2] | safe }},
+          backgroundColor: chartColors,
+          borderColor: borderColors,
+          borderWidth: 1,
+          borderRadius: 6,
+          barThickness: 30
         }]
       },
-      options: {
-        indexAxis: 'y',
-        scales: { x: { beginAtZero: true } },
-        responsive: true
-      }
+      options: baseOptions
     });
   }
 </script>
+
+
+<div id="loadingOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(255,255,255,0.85); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+  <div class="text-center">
+    <div class="spinner-border text-primary" role="status" style="width: 4rem; height: 4rem;"></div>
+    <p class="mt-3 fw-bold text-dark">Generating central view...</p>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const isGenerating = {{ 'true' if is_generating_view else 'false' }};
+  window.addEventListener('DOMContentLoaded', () => {
+    if (!isGenerating) {
+      document.getElementById('loadingOverlay').style.display = 'none';
+    }
+  });
+</script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  const btn = document.getElementById("toggleNewsBtn");
+  const extraItems = document.querySelectorAll(".extra-news");
+  let expanded = false;
+
+  if (btn) {
+    btn.addEventListener("click", function () {
+      expanded = !expanded;
+      extraItems.forEach(item => item.classList.toggle("d-none"));
+      btn.textContent = expanded ? "View Less" : "View More";
+    });
+  }
+});
+</script>
+
 </body>
 </html>
