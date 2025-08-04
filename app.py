@@ -27,6 +27,7 @@ def generate_central_view(topic):
             temperature=0.5
         )
         return response.choices[0].message.content.strip()
+
     except Exception as e:
         print("Central view generation failed:", e)
         return "Central view is not available at the moment."
@@ -349,27 +350,28 @@ def add_user(username, hashed_password, firstname, lastname):
 
 @app.route('/save-alignment/<int:debate_id>', methods=['POST'])
 def save_alignment(debate_id):
-    if 'user_id' not in session:
-        return jsonify({'error': 'Unauthorized'}), 401
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'error': 'Unauthorized'}), 403
 
-    user_id = session['user_id']
     data = request.get_json()
-    alignment = data.get('alignment')
-    phase = data.get('phase')  # 'pre' or 'post'
+    phase = data.get('phase')
+    topic_scores = data.get('topic_scores', {})
 
-    if phase not in ('pre', 'post'):
-        return jsonify({'error': 'Invalid phase'}), 400
+    conn = sqlite3.connect(DB_PATH)
+    c = conn.cursor()
+    for topic, score in topic_scores.items():
+        c.execute('''
+            INSERT INTO topic_alignment_scores (user_id, debate_id, topic, phase, score)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(user_id, debate_id, topic, phase)
+            DO UPDATE SET score = excluded.score
+        ''', (user_id, debate_id, topic, phase, score))
+    conn.commit()
+    conn.close()
 
-    with sqlite3.connect(DB_PATH) as conn:
-        cursor = conn.cursor()
-        cursor.execute('''
-            INSERT INTO alignment_results (user_id, debate_id, phase, alignment)
-            VALUES (?, ?, ?, ?)
-            ON CONFLICT(user_id, debate_id, phase) DO UPDATE SET alignment=excluded.alignment
-        ''', (user_id, debate_id, phase, alignment))
-        conn.commit()
+    return jsonify({'success': True})
 
-    return jsonify({'status': 'saved'})
 
 
 # Routes
@@ -494,40 +496,61 @@ def mypage():
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
 
-        # Debate details
+        # Get debate details
         cursor.execute('''
-            SELECT d.topic, s1.stance, s1.comment, s2.stance, s2.comment, a1.alignment, a2.alignment
-            FROM debates d
-            LEFT JOIN surveys s1 ON s1.debate_id = d.id AND s1.user_id = ? AND s1.phase = 'pre'
-            LEFT JOIN surveys s2 ON s2.debate_id = d.id AND s2.user_id = ? AND s2.phase = 'post'
-            LEFT JOIN alignment_results a1 ON a1.debate_id = d.id AND a1.user_id = ?
-            LEFT JOIN alignment_results a2 ON a2.debate_id = d.id AND a2.user_id = ?
-            WHERE s1.id IS NOT NULL OR s2.id IS NOT NULL
-        ''', (user_id, user_id, user_id, user_id))
-
-        rows = cursor.fetchall()
+            SELECT id, topic FROM debates
+        ''')
+        debates = cursor.fetchall()
 
         debate_details = {}
-        for row in rows:
-            topic, pre_stance, pre_comment, post_stance, post_comment, alignment_pre, alignment_post = row
+
+        for debate_id, topic in debates:
+            # Get stances and alignments
+            cursor.execute('''
+                SELECT stance, comment FROM surveys WHERE user_id = ? AND debate_id = ? AND phase = 'pre'
+            ''', (user_id, debate_id))
+            pre = cursor.fetchone()
+
+            cursor.execute('''
+                SELECT stance, comment FROM surveys WHERE user_id = ? AND debate_id = ? AND phase = 'post'
+            ''', (user_id, debate_id))
+            post = cursor.fetchone()
+
+            cursor.execute('''
+                SELECT alignment FROM alignment_results WHERE user_id = ? AND debate_id = ? AND phase = 'pre'
+            ''', (user_id, debate_id))
+            alignment_pre = cursor.fetchone()
+            cursor.execute('''
+                SELECT alignment FROM alignment_results WHERE user_id = ? AND debate_id = ? AND phase = 'post'
+            ''', (user_id, debate_id))
+            alignment_post = cursor.fetchone()
+
+            # Get topic scores
+            cursor.execute('''
+                SELECT topic, phase, score FROM topic_alignment_scores
+                WHERE user_id = ? AND debate_id = ?
+            ''', (user_id, debate_id))
+            topic_scores = cursor.fetchall()
+
+            score_dict = {}
+            for t, phase, score in topic_scores:
+                score_dict.setdefault(t, {})[phase] = score
+
             debate_details[topic] = {
-                'pre_stance': pre_stance,
-                'pre_comment': pre_comment,
-                'post_stance': post_stance,
-                'post_comment': post_comment,
-                'alignment_pre': alignment_pre,
-                'alignment_post': alignment_post
+                'pre_stance': pre[0] if pre else None,
+                'post_stance': post[0] if post else None,
+                'alignment_pre': alignment_pre[0] if alignment_pre else None,
+                'alignment_post': alignment_post[0] if alignment_post else None,
+                'topic_scores': score_dict
             }
 
-        # Average alignment score (pre)
+        # Average alignment score
         cursor.execute('''
             SELECT alignment FROM alignment_results
-            JOIN debates ON alignment_results.debate_id = debates.id
             WHERE user_id = ? AND alignment IS NOT NULL
         ''', (user_id,))
         alignments = [row[0] for row in cursor.fetchall()]
 
-    # Convert alignment to numeric values
     alignment_map = {'left': -1, 'center': 0, 'right': 1}
     scores = [alignment_map[a] for a in alignments if a in alignment_map]
 
@@ -550,6 +573,7 @@ def mypage():
         avg_alignment_score=avg_score,
         avg_alignment_label=avg_label
     )
+
 
 @app.route('/dashboard')
 def dashboard():
@@ -574,6 +598,30 @@ def dashboard():
                            is_admin=is_admin(),
                            current_debates=current_debates,
                            past_debates=past_debates)
+
+def get_db_connection():
+    return sqlite3.connect(DB_PATH)
+
+def check_alignment_completion(user_id, debate_id, phase):
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    cursor.execute("""
+        SELECT topic, score
+        FROM topic_alignment_scores
+        WHERE user_id = ? AND debate_id = ? AND phase = ?
+    """, (user_id, debate_id, phase))
+
+    rows = cursor.fetchall()
+    conn.close()
+
+    if rows:
+        topic_scores = {topic: float(score) for topic, score in rows}
+        print("ABC")
+        return True, topic_scores
+    else:
+        print("DEF")
+        return False, {}
 
 
 
@@ -674,13 +722,23 @@ def debate(debate_id):
         notes = cursor.fetchall()
         saved_notes = {row[0]: row[1] for row in notes} if notes else {}
     news_articles = fetch_news(topic, debate_id)
-
+    alignment_questions = load_alignment_questions()
+    topics = [q['Topic'] for q in alignment_questions]
+    group_average = get_mock_group_average(topics)
+    pre_done, pre_data = check_alignment_completion(user_id, debate_id, "pre")
+    post_done, post_data = check_alignment_completion(user_id, debate_id, "post")
     return render_template(
         "debate.html",
         debate_id=debate_id,
         topic=topic,
+        pre_done=pre_done,
+        post_done=post_done,
+        pre_data= pre_data,
+        post_data= post_data,
         country=country,
         date=date,
+        alignment_questions=alignment_questions,
+        group_average=group_average,
         saved_notes=saved_notes,
         central_view=central_view_paragraph,
         is_admin=is_admin_flag,
@@ -696,7 +754,6 @@ def debate(debate_id):
         post_submitted=post_submitted,
         week1_done=week1_done,
         week2_done=week2_done,
-        alignment_questions=alignment_questions,
         debate_image= image
     )
 
@@ -815,10 +872,15 @@ def get_survey_data():
         "post": [post['support'], post['oppose'], post['neutral']]
     })
 
+def get_mock_group_average(topics):
+    return {topic: round(random.uniform(2.0, 4.0), 2) for topic in topics}
+
 def load_alignment_questions():
     df = pd.read_csv("static/sa_questions.csv")
-    df = df[:7]
-    return df.to_dict(orient='records')
+    # df = df[:7]
+    # return df.to_dict(orient='records')
+    df_unique = df.drop_duplicates(subset="Topic", keep="first")  # One question per topic
+    return df_unique.to_dict(orient='records')
 @app.route('/comment', methods=['POST'])
 def submit_comment():
     if 'user_id' not in session:
@@ -870,8 +932,8 @@ def view_debate(debate_id):
                     counts[stance] += 1
             return [counts['support'], counts['oppose'], counts['neutral']]
 
-        pre_data = get_counts('pre')
-        post_data = get_counts('post')
+        pre_data_sur = get_counts('pre')
+        post_data_sur = get_counts('post')
 
         # Only fetch current user's notes
         cursor.execute("""
@@ -916,15 +978,22 @@ def view_debate(debate_id):
     news_articles = fetch_news(topic, debate_id)
     cursor.execute("SELECT central_view FROM debates WHERE id = ?", (debate_id,))
     central_view = cursor.fetchone()[0]
-
+    pre_done, pre_data = check_alignment_completion(user_id, debate_id, "pre")
+    post_done, post_data = check_alignment_completion(user_id, debate_id, "post")
+    alignment_questions = load_alignment_questions()
+    topics = [q['Topic'] for q in alignment_questions]
+    group_average = get_mock_group_average(topics)
     return render_template('debate_view.html',
                            topic=topic,
                            country=country,
+                           group_average=group_average,
+                           pre_data=pre_data,
+                           post_data=post_data,
                            date=date,
                            central_view=central_view,
                            saved_notes=saved_notes,
-                           pre_data=pre_data,
-                           post_data=post_data,
+                           pre_data_sur=pre_data_sur,
+                           post_data_sur=post_data_sur,
                            notes=notes,
                            debate_id=debate_id,
                            user_pre_survey=user_pre_survey,

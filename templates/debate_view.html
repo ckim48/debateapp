@@ -132,11 +132,87 @@
 
 
     <div class="tab-pane fade show active" id="week1">
-      {% if alignment_result %}
-        <div class="alert alert-info text-center">
-          <strong>Your Political Alignment:</strong> {{ alignment_result | capitalize }}
+  {% if False %}
+    <!-- Alignment Form -->
+<form id="alignmentFormPre">
+  <p class="text-muted">Answer the following to determine your general alignment.</p>
+  {% for q in alignment_questions %}
+    {% set q_idx = loop.index0 %}
+    <div class="mb-3">
+      <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
+      {% for i in range(1, 6) %}
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="q{{ q_idx }}" value="{{ i }}">
+          <label class="form-check-label">
+            {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
+          </label>
         </div>
-      {% endif %}
+      {% endfor %}
+    </div>
+  {% endfor %}
+  <div class="text-end">
+    <button class="action-button" type="submit">Check Alignment</button>
+  </div>
+</form>
+
+
+<div id="alignmentResultPre" class="mt-4">
+  {% else %}
+    <!-- Show Pre Alignment Result -->
+    <div id="alignmentResultPre" class="mt-4">
+      <script>
+
+const chartHTML = `
+  <div class="mt-2 p-4" style="border-radius: 16px;">
+    <!-- Radar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="radarChart" style="height: 300px; max-width: 520px;"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="barChart" style="height: 300px; max-width: 520px;"></canvas>
+      </div>
+    </div>
+
+    <!-- Text Summary Table -->
+    <div class="mt-4">
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
+          <thead class="table-light">
+            <tr>
+              <th>Topic</th>
+              <th>Score (avg)</th>
+            </tr>
+          </thead>
+          <tbody id="topicTableSummary">
+            <!-- Filled dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+`;
+        const pre_data = {{ pre_data | tojson }};
+        document.addEventListener("DOMContentLoaded", () => {
+          if (pre_data && Object.keys(pre_data).length > 0) {
+            document.getElementById('alignmentResultPre').innerHTML = chartHTML;
+            setTimeout(() => {
+              showRadarChart(pre_data);
+              showBarChart(pre_data);
+              fillTopicTable(pre_data);
+            }, 1000);
+          }
+        });
+      </script>
+    </div>
+  {% endif %}
 
       {% if user_pre_survey %}
         <div class="alert alert-light">
@@ -198,11 +274,87 @@
     </div>
 
     <div class="tab-pane fade" id="week3">
-      {% if alignment_result %}
-        <div class="alert alert-info text-center">
-          <strong>Your Political Alignment:</strong> {{ alignment_result | capitalize }}
+
+  {% if False %}
+    <!-- Alignment Form -->
+
+<form id="alignmentFormPost">
+  <p class="text-muted">Answer the following to determine your general alignment.</p>
+  {% for q in alignment_questions %}
+    {% set q_idx = loop.index0 %}
+    <div class="mb-3">
+      <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
+      {% for i in range(1, 6) %}
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="post_q{{ q_idx }}" value="{{ i }}">
+          <label class="form-check-label">
+            {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
+          </label>
         </div>
-      {% endif %}
+      {% endfor %}
+    </div>
+  {% endfor %}
+  <div class="text-end">
+    <button class="action-button" type="submit">Check Alignment</button>
+  </div>
+</form>
+<div id="alignmentResultPost" class="mt-4">
+  {% else %}
+    <div id="alignmentResultPost" class="mt-4">
+      <script>
+
+const chartHTML2 = `
+  <div class="mt-2 p-4" style="border-radius: 16px;">
+    <!-- Radar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="radarChartPost" style="height: 300px; max-width: 620px;"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+      <div class="d-flex justify-content-center">
+<canvas id="barChartPost" style="width: 100%; height: 400px; max-width: 1200px;"></canvas>
+
+      </div>
+    </div>
+
+    <!-- Text Summary Table -->
+    <div class="mt-4">
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
+          <thead class="table-light">
+            <tr>
+              <th>Topic</th>
+              <th>Score (avg)</th>
+            </tr>
+          </thead>
+          <tbody id="topicTableSummaryPost">
+            <!-- Filled dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+`;
+        const post_data = {{ post_data | tojson }};
+        document.addEventListener("DOMContentLoaded", () => {
+          if (post_data && Object.keys(post_data).length > 0) {
+            document.getElementById('alignmentResultPost').innerHTML = chartHTML2;
+            setTimeout(() => {
+              showRadarChart2(post_data);
+              showBarChart2(post_data);
+              fillTopicTable2(post_data);
+            }, 50);
+          }
+        });
+      </script>
+    </div>
+  {% endif %}
 
       <div class="card-custom">
         <h5 class="section-title">Post-Debate Survey</h5>
@@ -240,6 +392,7 @@
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    const groupAverage = {{ group_average | tojson | safe }};
   const preCtx = document.getElementById('preChart');
   const postCtx = document.getElementById('postChart');
 
@@ -292,7 +445,7 @@ const baseOptions = {
       data: {
         labels: ['Support', 'Oppose'],
         datasets: [{
-          data: {{ pre_data[:2] | safe }},
+          data: {{ pre_data_sur[:2] | safe }},
           backgroundColor: chartColors,
           borderColor: borderColors,
           borderWidth: 1,
@@ -310,7 +463,7 @@ const baseOptions = {
       data: {
         labels: ['Support', 'Oppose'],
         datasets: [{
-          data: {{ post_data[:2] | safe }},
+          data: {{ post_data_sur[:2] | safe }},
           backgroundColor: chartColors,
           borderColor: borderColors,
           borderWidth: 1,
@@ -355,6 +508,299 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   }
 });
+  function fillTopicTable(topicAverages) {
+  const tbody = document.getElementById("topicTableSummary");
+  tbody.innerHTML = ""; // Clear old rows
+
+  Object.entries(topicAverages).forEach(([topic, score]) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${topic}</td>
+      <td class="fw-bold">${score.toFixed(1)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function showRadarChart(userData) {
+  const labels = Object.keys(userData);
+  const userScores = Object.values(userData);
+  const groupScores = labels.map(topic => groupAverage[topic] || 0);
+
+  const ctx = document.getElementById("radarChart").getContext("2d");
+  new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Your Scores",
+          data: userScores,
+          backgroundColor: "rgba(54, 162, 235, 0.3)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          pointBackgroundColor: "rgba(54, 162, 235, 1)"
+        },
+        {
+          label: "Average of Others",
+          data: groupScores,
+          backgroundColor: "rgba(128, 128, 128, 0.2)",
+          borderColor: "rgba(128, 128, 128, 0.9)",
+          pointBackgroundColor: "rgba(128, 128, 128, 0.9)"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, // allows us to manually size it
+      layout: {
+        padding: 0 // removes extra layout padding
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            padding: 6,         // reduce space inside legend
+            boxWidth: 14,
+            font: {
+              size: 12
+            }
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 1,
+          max: 5,
+          ticks: {
+            stepSize: 1,
+            backdropColor: 'transparent'
+          },
+          pointLabels: {
+            font: {
+              size: 12
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function showBarChart(topicAverages) {
+  const ctx = document.getElementById('barChart');
+  if (!ctx) return console.error("Bar canvas not found.");
+
+  const labels = Object.keys(topicAverages);
+  const data = Object.values(topicAverages);
+
+  // Color palette: use more or adjust as needed
+  const colors = [
+    'rgba(255, 99, 132, 0.6)',   // Red
+    'rgba(54, 162, 235, 0.6)',   // Blue
+    'rgba(255, 206, 86, 0.6)',   // Yellow
+    'rgba(75, 192, 192, 0.6)',   // Teal
+    'rgba(153, 102, 255, 0.6)',  // Purple
+    'rgba(255, 159, 64, 0.6)',   // Orange
+    'rgba(108, 117, 125, 0.6)'   // Gray
+  ];
+
+  const backgroundColors = labels.map((_, i) => colors[i % colors.length]);
+  const borderColors = backgroundColors.map(color => color.replace('0.6', '1'));
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Average Score',
+        data,
+        backgroundColor: backgroundColors,
+        borderColor: borderColors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          min: 0,
+          max: 5,
+          ticks: {
+            stepSize: 1
+          }
+        },
+        x: {
+          ticks: {
+            font: { size: 12 }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+}
+
+
+ function fillTopicTable2(topicAverages) {
+  const tbody = document.getElementById("topicTableSummaryPost");
+  tbody.innerHTML = ""; // Clear old rows
+
+  Object.entries(topicAverages).forEach(([topic, score]) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${topic}</td>
+      <td class="fw-bold">${score.toFixed(1)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function showRadarChart2(userData) {
+  const labels = Object.keys(userData);
+  const userScores = Object.values(userData);
+  const groupScores = labels.map(topic => groupAverage[topic] || 0);
+
+  const ctx = document.getElementById("radarChartPost").getContext("2d");
+  new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Your Scores",
+          data: userScores,
+          backgroundColor: "rgba(54, 162, 235, 0.3)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          pointBackgroundColor: "rgba(54, 162, 235, 1)"
+        },
+        {
+          label: "Average of Others",
+          data: groupScores,
+          backgroundColor: "rgba(128, 128, 128, 0.2)",
+          borderColor: "rgba(128, 128, 128, 0.9)",
+          pointBackgroundColor: "rgba(128, 128, 128, 0.9)"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, // allows us to manually size it
+      layout: {
+        padding: 0 // removes extra layout padding
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            padding: 6,         // reduce space inside legend
+            boxWidth: 14,
+            font: {
+              size: 12
+            }
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 1,
+          max: 5,
+          ticks: {
+            stepSize: 1,
+            backdropColor: 'transparent'
+          },
+          pointLabels: {
+            font: {
+              size: 12
+            }
+          }
+        }
+      }
+    }
+  });
+}
+function showBarChart2(postData) {
+  const ctx = document.getElementById('barChartPost');
+  if (!ctx) return console.error("Post line chart canvas not found.");
+
+  const labels = Object.keys(postData);
+  const postScores = Object.values(postData);
+  const preScores = labels.map(topic => (typeof pre_data !== "undefined" ? pre_data[topic] || 0 : 0));
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Pre-Debate Score',
+          data: preScores,
+          fill: false,
+          borderColor: 'rgba(108, 117, 125, 1)', // Gray
+          backgroundColor: 'rgba(108, 117, 125, 0.4)',
+          tension: 0.2,
+          pointStyle: 'circle',
+          pointRadius: 5,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'Post-Debate Score',
+          data: postScores,
+          fill: false,
+          borderColor: 'rgba(54, 162, 235, 1)', // Blue
+          backgroundColor: 'rgba(54, 162, 235, 0.4)',
+          tension: 0.2,
+          pointStyle: 'rectRot',
+          pointRadius: 5,
+          pointHoverRadius: 6
+        }
+      ]
+    },
+    options: {
+        responsive: true,
+  maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          min: 0,
+          max: 6,
+          ticks: {
+            stepSize: 1
+          },
+          title: {
+            display: true,
+            text: 'Average Score',
+            font: { size: 14 }
+          }
+        },
+        x: {
+          ticks: {
+            font: { size: 12 }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: { size: 12 },
+            boxWidth: 12
+          }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      }
+    }
+  });
+}
+
 </script>
 
 </body>

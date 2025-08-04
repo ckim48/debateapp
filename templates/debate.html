@@ -20,7 +20,7 @@
     text-align: center !important;
     color: #212529;
     margin-top: 20px;
-    margin-bottom: 50px;
+    margin-bottom: 35px;
     border-bottom: 2px solid #dee2e6;
     padding-bottom: 0.5rem;
     display: inline-block;
@@ -252,19 +252,25 @@
           <li>Write your preparation notes using the editor provided.</li>
         </ul>
       </div>
-      <div class="card-custom mb-4">
-        <h5 class="section-title">Political Alignment Test</h5>
-        {% if not alignment_pre %}
+<div class="card-custom mb-4">
+  <h5 class="section-title">Pre-Political Alignment Test</h5>
+
+  {% if not pre_done %}
+    <!-- Alignment Form -->
 <form id="alignmentFormPre">
   <p class="text-muted">Answer the following to determine your general alignment.</p>
   {% for q in alignment_questions %}
+    {% set q_idx = loop.index0 %}
     <div class="mb-3">
       <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
-      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="1"> <label class="form-check-label">Strongly Disagree</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="2"> <label class="form-check-label">Disagree</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="3"> <label class="form-check-label">Neutral</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="4"> <label class="form-check-label">Agree</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="q{{ loop.index0 }}" value="5"> <label class="form-check-label">Strongly Agree</label></div>
+      {% for i in range(1, 6) %}
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="q{{ q_idx }}" value="{{ i }}">
+          <label class="form-check-label">
+            {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
+          </label>
+        </div>
+      {% endfor %}
     </div>
   {% endfor %}
   <div class="text-end">
@@ -273,17 +279,65 @@
 </form>
 
 
-      <div id="alignmentResultPre" class="text-center mt-3 fw-bold" style="display: none;"></div>
-      {% else %}
-      <div id="alignmentResultPre" class="text-center p-1">
-        <h5 class="mb-2">Your Pre-Debate Alignment</h5>
-        <div class="fs-4 fw-bold"  style="color: #6f42c1;">
-          {{ alignment_pre | capitalize }}
-        </div>
-      </div>
+<div id="alignmentResultPre" class="mt-4">
+  {% else %}
+    <!-- Show Pre Alignment Result -->
+    <div id="alignmentResultPre" class="mt-4">
+      <script>
 
-      {% endif %}
+const chartHTML = `
+  <div class="mt-2 p-4" style="border-radius: 16px;">
+    <!-- Radar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="radarChart" style="height: 300px; max-width: 520px;"></canvas>
       </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="barChart" style="height: 300px; max-width: 520px;"></canvas>
+      </div>
+    </div>
+
+    <!-- Text Summary Table -->
+    <div class="mt-4">
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
+          <thead class="table-light">
+            <tr>
+              <th>Topic</th>
+              <th>Score (avg)</th>
+            </tr>
+          </thead>
+          <tbody id="topicTableSummary">
+            <!-- Filled dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+`;
+        const pre_data = {{ pre_data | tojson }};
+        document.addEventListener("DOMContentLoaded", () => {
+          if (pre_data && Object.keys(pre_data).length > 0) {
+            document.getElementById('alignmentResultPre').innerHTML = chartHTML;
+            setTimeout(() => {
+              showRadarChart(pre_data);
+              showBarChart(pre_data);
+              fillTopicTable(pre_data);
+            }, 1000);
+          }
+        });
+      </script>
+    </div>
+  {% endif %}
+</div>
+
 
       <!-- Pre-Debate Survey -->
 <div class="card-custom">
@@ -380,41 +434,91 @@
     <li>Complete the <strong>Political Alignment Test AND Post-Debate Survey</strong>.</li>
   </ul>
 </div>
-      <div class="card-custom mb-4">
-        <h5 class="section-title">Political Alignment Test</h5>
-        {% if not alignment_post %}
+<div class="card-custom mb-4">
+  <h5 class="section-title">Post-Political Alignment Test</h5>
+
+  {% if not post_done %}
+    <!-- Alignment Form -->
 
 <form id="alignmentFormPost">
   <p class="text-muted">Answer the following to determine your general alignment.</p>
   {% for q in alignment_questions %}
+    {% set q_idx = loop.index0 %}
     <div class="mb-3">
       <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
-      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="1"> <label class="form-check-label">Strongly Disagree</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="2"> <label class="form-check-label">Disagree</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="3"> <label class="form-check-label">Neutral</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="4"> <label class="form-check-label">Agree</label></div>
-      <div class="form-check"><input class="form-check-input" type="radio" name="post_q{{ loop.index0 }}" value="5"> <label class="form-check-label">Strongly Agree</label></div>
+      {% for i in range(1, 6) %}
+        <div class="form-check">
+          <input class="form-check-input" type="radio" name="post_q{{ q_idx }}" value="{{ i }}">
+          <label class="form-check-label">
+            {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
+          </label>
+        </div>
+      {% endfor %}
     </div>
   {% endfor %}
   <div class="text-end">
     <button class="action-button" type="submit">Check Alignment</button>
   </div>
 </form>
+<div id="alignmentResultPost" class="mt-4">
+  {% else %}
+    <div id="alignmentResultPost" class="mt-4">
+      <script>
 
-
-<div id="alignmentResultPost" class="text-center mt-3 fw-bold" style="display: none;"></div>
-{% else %}
-<div id="alignmentResultPost" class="mx-auto mt-4 p-4 rounded-4 text-center shadow-sm" style="max-width: 500px; border-left: 6px solid #6f42c1; background-color: #f6f2fc;" data-aos="fade-up">
-  <h5 class="fw-bold mb-2">Post-Debate Alignment</h5>
-  <p class="mb-0 fs-5">
-    Your political stance after the debate is:
-    <span class="fw-bold text-uppercase" style="color: #6f42c1;">
-      {{ alignment_post | capitalize }}
-    </span>
-  </p>
-</div>
-{% endif %}
+const chartHTML2 = `
+  <div class="mt-2 p-4" style="border-radius: 16px;">
+    <!-- Radar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="radarChartPost" style="height: 300px; max-width: 620px;"></canvas>
       </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+      <div class="d-flex justify-content-center">
+<canvas id="barChartPost" style="width: 100%; height: 400px; max-width: 1200px;"></canvas>
+
+      </div>
+    </div>
+
+    <!-- Text Summary Table -->
+    <div class="mt-4">
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
+          <thead class="table-light">
+            <tr>
+              <th>Topic</th>
+              <th>Score (avg)</th>
+            </tr>
+          </thead>
+          <tbody id="topicTableSummaryPost">
+            <!-- Filled dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+`;
+        const post_data = {{ post_data | tojson }};
+        document.addEventListener("DOMContentLoaded", () => {
+          if (post_data && Object.keys(post_data).length > 0) {
+            document.getElementById('alignmentResultPost').innerHTML = chartHTML2;
+            setTimeout(() => {
+              showRadarChart2(post_data);
+              showBarChart2(post_data);
+              fillTopicTable2(post_data);
+            }, 50);
+          }
+        });
+      </script>
+    </div>
+  {% endif %}
+</div>
+
 
 <div class="card-custom">
   <h5 class="section-title">Post-Debate Survey</h5>
@@ -647,75 +751,106 @@ const savedNotes = {{ saved_notes | tojson | safe }};
 });
 </script>
 <script>
-document.getElementById('alignmentFormPre')?.addEventListener('submit', function (e) {
-  e.preventDefault();
-  const form = e.target;
-  const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked'))
-    .map(input => parseInt(input.value));
-
-  if (responses.length !== {{ alignment_questions | length }}) {
-    alert("Please answer all alignment questions.");
-    return;
-  }
-
-  const score = responses.reduce((a, b) => a + b, 0);
-  const average = score / responses.length;
-
-  let alignment;
-  if (average <= 2.4) alignment = "left";
-  else if (average >= 3.6) alignment = "right";
-  else alignment = "center";
-
-  fetch(`/save-alignment/{{ debate_id }}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ alignment: alignment, phase: 'pre' })
-  }).then(res => {
-    if (res.ok) location.reload();
-    else alert("Failed to save alignment.");
-  });
-});
-
-
 
 document.getElementById('alignmentFormPost')?.addEventListener('submit', function (e) {
   e.preventDefault();
-  const postForm = document.getElementById("alignmentFormPost");
-  const responses = Array.from(postForm.querySelectorAll('input[type="radio"]:checked'))
-    .map(input => parseInt(input.value));
+  const form = e.target;
 
-  if (responses.length !== {{ alignment_questions|length }}) {
-    alert("Please answer all alignment questions.");
+const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked')).map(input => {
+  const index = parseInt(input.name.replace('post_q', ''));
+  return {
+    topic: questionTopics[index],
+    value: parseInt(input.value)
+  };
+});
+
+  if (responses.length !== questionTopics.length) {
+    alert("Please answer all questions.");
     return;
   }
 
-  const score = responses.reduce((a, b) => a + b, 0);
-  const avg = score / responses.length;
+  const topicScores = {};
+  const topicCounts = {};
 
-  let alignment;
-  if (avg <= 2.4) alignment = 'left';
-  else if (avg >= 3.6) alignment = 'right';
-  else alignment = 'center';
+  responses.forEach(({ topic, value }) => {
+    topicScores[topic] = (topicScores[topic] || 0) + value;
+    topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+  });
 
+  const topicAverages = {};
+  for (const topic in topicScores) {
+    topicAverages[topic] = topicScores[topic] / topicCounts[topic];
+  }
+
+  const chartHTML = `
+    <div class="mt-2 p-4" style="border-radius: 16px; ">
+
+
+      <!-- Radar Chart -->
+      <div class="mb-5 text-center">
+        <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+        <div class="d-flex justify-content-center">
+          <canvas id="radarChartPost" style="height: 300px; max-width: 520px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Bar Chart -->
+      <div class="mb-5 text-center">
+        <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+        <div class="d-flex justify-content-center">
+          <canvas id="barChartPost" style="height: 300px; max-width: 520px;"></canvas>
+        </div>
+      </div>
+
+      <!-- Table Summary -->
+      <div class="mt-4">
+        <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+        <div class="table-responsive">
+          <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
+            <thead class="table-light">
+              <tr>
+                <th>Topic</th>
+                <th>Score (avg)</th>
+              </tr>
+            </thead>
+            <tbody id="topicTableSummaryPost">
+              <!-- Filled dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Send to backend
   fetch(`/save-alignment/{{ debate_id }}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ alignment, phase: 'post' })
+    body: JSON.stringify({
+      topic_scores: topicAverages,
+      phase: 'post'
+    })
   }).then(res => {
     if (res.ok) {
-      document.getElementById("alignmentResultPost").innerHTML = `
-        <h5 class="mb-2">Your Post-Debate Alignment</h5>
-        <div class="fs-4 fw-bold" style="color: #6f42c1;">
-          ${alignment.charAt(0).toUpperCase() + alignment.slice(1)}
-        </div>
-      `;
-      document.getElementById("alignmentResultPost").style.display = "block";
-      document.getElementById("alignmentFormPost").style.display = "none";
+      const resultDiv = document.getElementById("alignmentResultPost");
+      resultDiv.innerHTML = chartHTML;
+      resultDiv.style.display = "block";
+      form.style.display = "none";
+
+      setTimeout(() => {
+        showRadarChart2(topicAverages);
+        showBarChart2(topicAverages);
+        fillTopicTable2(topicAverages);
+
+        const radarCanvas = document.getElementById("radarChartPost");
+        if (radarCanvas) radarCanvas.scrollIntoView({ behavior: "smooth", block: "start" });
+      }, 100);
     } else {
       alert("Failed to save post alignment.");
     }
   });
 });
+
 
 function summarizeNote(week) {
   const html = editors[week].root.innerHTML;
@@ -756,6 +891,8 @@ function summarizeNote(week) {
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script>
+  const groupAverage = {{ group_average | tojson | safe }};
+
 document.querySelectorAll('.nav-link.disabled').forEach(btn => {
   btn.addEventListener('click', e => {
     e.preventDefault();
@@ -894,6 +1031,409 @@ function submitNote(week) {
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const questionTopics = {{ alignment_questions | tojson | safe }}.map(q => q.Topic);
+
+document.getElementById('alignmentFormPre')?.addEventListener('submit', function (e) {
+  e.preventDefault();
+  const form = e.target;
+
+  // Extract topic mapping from server-side data
+
+  // Gather selected answers with their associated topics
+  const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked')).map(input => ({
+    topic: questionTopics[parseInt(input.name.replace('q', ''))],
+    value: parseInt(input.value)
+  }));
+
+  if (responses.length !== questionTopics.length) {
+    alert("Please answer all questions.");
+    return;
+  }
+
+  // Aggregate values per topic
+  const topicScores = {};
+  const topicCounts = {};
+
+  responses.forEach(({ topic, value }) => {
+    topicScores[topic] = (topicScores[topic] || 0) + value;
+    topicCounts[topic] = (topicCounts[topic] || 0) + 1;
+  });
+
+  // Compute averages
+  const topicAverages = {};
+  for (const topic in topicScores) {
+    topicAverages[topic] = topicScores[topic] / topicCounts[topic];
+  }
+
+  // Save to backend
+  fetch(`/save-alignment/{{ debate_id }}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      topic_scores: topicAverages,
+      phase: "pre"
+    })
+  }).then(res => {
+    if (!res.ok) {
+      alert("Failed to save your results. Please try again.");
+    }
+  });
+
+const chartHTML = `
+  <div class="mt-2 p-4" style="border-radius: 16px;  ">
+
+
+    <!-- Radar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="radarChart" style="height: 300px; max-width: 520px;"></canvas>
+      </div>
+    </div>
+
+    <!-- Bar Chart -->
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="barChart" style="height: 300px; max-width: 520px;"></canvas>
+      </div>
+    </div>
+
+    <!-- Text Summary Table -->
+    <div class="mt-4">
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
+          <thead class="table-light">
+            <tr>
+              <th>Topic</th>
+              <th>Score (avg)</th>
+            </tr>
+          </thead>
+          <tbody id="topicTableSummary">
+            <!-- Filled dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+`;
+
+
+  const resultDiv = document.getElementById('alignmentResultPre');
+  resultDiv.innerHTML = chartHTML;
+  resultDiv.style.display = "block";
+  form.style.display = "none";
+
+  // Render charts
+setTimeout(() => {
+  showRadarChart(topicAverages);
+  showBarChart(topicAverages);
+  fillTopicTable(topicAverages);
+
+  const radarCanvas = document.getElementById("radarChart");
+  if (radarCanvas) {
+    radarCanvas.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+}, 100);
+});
+function fillTopicTable(topicAverages) {
+  const tbody = document.getElementById("topicTableSummary");
+  tbody.innerHTML = ""; // Clear old rows
+
+  Object.entries(topicAverages).forEach(([topic, score]) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${topic}</td>
+      <td class="fw-bold">${score.toFixed(1)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function showRadarChart(userData) {
+  const labels = Object.keys(userData);
+  const userScores = Object.values(userData);
+  const groupScores = labels.map(topic => groupAverage[topic] || 0);
+
+  const ctx = document.getElementById("radarChart").getContext("2d");
+  new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Your Scores",
+          data: userScores,
+          backgroundColor: "rgba(54, 162, 235, 0.3)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          pointBackgroundColor: "rgba(54, 162, 235, 1)"
+        },
+        {
+          label: "Average of Others",
+          data: groupScores,
+          backgroundColor: "rgba(128, 128, 128, 0.2)",
+          borderColor: "rgba(128, 128, 128, 0.9)",
+          pointBackgroundColor: "rgba(128, 128, 128, 0.9)"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, // allows us to manually size it
+      layout: {
+        padding: 0 // removes extra layout padding
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            padding: 6,         // reduce space inside legend
+            boxWidth: 14,
+            font: {
+              size: 12
+            }
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 1,
+          max: 5,
+          ticks: {
+            stepSize: 1,
+            backdropColor: 'transparent'
+          },
+          pointLabels: {
+            font: {
+              size: 12
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+function showBarChart(topicAverages) {
+  const ctx = document.getElementById('barChart');
+  if (!ctx) return console.error("Bar canvas not found.");
+
+  const labels = Object.keys(topicAverages);
+  const data = Object.values(topicAverages);
+
+  // Color palette: use more or adjust as needed
+  const colors = [
+    'rgba(255, 99, 132, 0.6)',   // Red
+    'rgba(54, 162, 235, 0.6)',   // Blue
+    'rgba(255, 206, 86, 0.6)',   // Yellow
+    'rgba(75, 192, 192, 0.6)',   // Teal
+    'rgba(153, 102, 255, 0.6)',  // Purple
+    'rgba(255, 159, 64, 0.6)',   // Orange
+    'rgba(108, 117, 125, 0.6)'   // Gray
+  ];
+
+  const backgroundColors = labels.map((_, i) => colors[i % colors.length]);
+  const borderColors = backgroundColors.map(color => color.replace('0.6', '1'));
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Average Score',
+        data,
+        backgroundColor: backgroundColors,
+        borderColor: borderColors,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      responsive: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          min: 0,
+          max: 5,
+          ticks: {
+            stepSize: 1
+          }
+        },
+        x: {
+          ticks: {
+            font: { size: 12 }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: false
+        }
+      }
+    }
+  });
+}
+
+
+ function fillTopicTable2(topicAverages) {
+  const tbody = document.getElementById("topicTableSummaryPost");
+  tbody.innerHTML = ""; // Clear old rows
+
+  Object.entries(topicAverages).forEach(([topic, score]) => {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${topic}</td>
+      <td class="fw-bold">${score.toFixed(1)}</td>
+    `;
+    tbody.appendChild(row);
+  });
+}
+
+function showRadarChart2(userData) {
+  const labels = Object.keys(userData);
+  const userScores = Object.values(userData);
+  const groupScores = labels.map(topic => groupAverage[topic] || 0);
+
+  const ctx = document.getElementById("radarChartPost").getContext("2d");
+  new Chart(ctx, {
+    type: "radar",
+    data: {
+      labels,
+      datasets: [
+        {
+          label: "Your Scores",
+          data: userScores,
+          backgroundColor: "rgba(54, 162, 235, 0.3)",
+          borderColor: "rgba(54, 162, 235, 1)",
+          pointBackgroundColor: "rgba(54, 162, 235, 1)"
+        },
+        {
+          label: "Average of Others",
+          data: groupScores,
+          backgroundColor: "rgba(128, 128, 128, 0.2)",
+          borderColor: "rgba(128, 128, 128, 0.9)",
+          pointBackgroundColor: "rgba(128, 128, 128, 0.9)"
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false, // allows us to manually size it
+      layout: {
+        padding: 0 // removes extra layout padding
+      },
+      plugins: {
+        legend: {
+          position: 'top',
+          labels: {
+            padding: 6,         // reduce space inside legend
+            boxWidth: 14,
+            font: {
+              size: 12
+            }
+          }
+        }
+      },
+      scales: {
+        r: {
+          min: 1,
+          max: 5,
+          ticks: {
+            stepSize: 1,
+            backdropColor: 'transparent'
+          },
+          pointLabels: {
+            font: {
+              size: 12
+            }
+          }
+        }
+      }
+    }
+  });
+}
+function showBarChart2(postData) {
+  const ctx = document.getElementById('barChartPost');
+  if (!ctx) return console.error("Post line chart canvas not found.");
+
+  const labels = Object.keys(postData);
+  const postScores = Object.values(postData);
+  const preScores = labels.map(topic => (typeof pre_data !== "undefined" ? pre_data[topic] || 0 : 0));
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Pre-Debate Score',
+          data: preScores,
+          fill: false,
+          borderColor: 'rgba(108, 117, 125, 1)', // Gray
+          backgroundColor: 'rgba(108, 117, 125, 0.4)',
+          tension: 0.2,
+          pointStyle: 'circle',
+          pointRadius: 5,
+          pointHoverRadius: 6
+        },
+        {
+          label: 'Post-Debate Score',
+          data: postScores,
+          fill: false,
+          borderColor: 'rgba(54, 162, 235, 1)', // Blue
+          backgroundColor: 'rgba(54, 162, 235, 0.4)',
+          tension: 0.2,
+          pointStyle: 'rectRot',
+          pointRadius: 5,
+          pointHoverRadius: 6
+        }
+      ]
+    },
+    options: {
+        responsive: true,
+  maintainAspectRatio: false,
+      scales: {
+        y: {
+          beginAtZero: true,
+          min: 0,
+          max: 6,
+          ticks: {
+            stepSize: 1
+          },
+          title: {
+            display: true,
+            text: 'Average Score',
+            font: { size: 14 }
+          }
+        },
+        x: {
+          ticks: {
+            font: { size: 12 }
+          }
+        }
+      },
+      plugins: {
+        legend: {
+          display: true,
+          position: 'top',
+          labels: {
+            font: { size: 12 },
+            boxWidth: 12
+          }
+        },
+        tooltip: {
+          mode: 'index',
+          intersect: false
+        }
+      }
+    }
+  });
+}
+
+</script>
 
 
 </body>

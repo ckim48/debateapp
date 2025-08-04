@@ -75,7 +75,7 @@ def generate_mock_surveys():
         cursor.execute("SELECT id FROM debates WHERE is_active = 0")
         closed_debates = [row[0] for row in cursor.fetchall()]
         if not closed_debates:
-            print("❌ No closed debates found. Run add_mock_closed_debates() first.")
+            print(" No closed debates found. Run add_mock_closed_debates() first.")
             return
 
         stances = ['support', 'oppose', 'neutral']
@@ -130,7 +130,7 @@ def generate_mock_surveys():
             ''', (admin_user_id, debate_id, random.choice(sides)))
 
         conn.commit()
-        print("✅ Mock survey, alignment, and role assignment data inserted.")
+        print("Mock survey, alignment, and role assignment data inserted.")
 
 def setup_demo_data():
     add_mock_closed_debates()
