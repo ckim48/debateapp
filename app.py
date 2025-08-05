@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 from openai import OpenAI
 import requests
 import pandas as pd
+from polimbti import calculate_political_type_from_categories
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -14,6 +15,31 @@ DB_PATH = 'biasbridge.db'
 UPLOAD_FOLDER = 'static/debate_images'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+
+
+from collections import defaultdict
+
+def get_category_averages(user_id):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT topic, score
+            FROM topic_alignment_scores
+            WHERE user_id = ?
+        ''', (user_id,))
+        rows = cursor.fetchall()
+
+    # Assuming `topic` is the category name (e.g., "Globalism")
+    category_scores = defaultdict(list)
+    for category, score in rows:
+        category_scores[category].append(float(score))
+
+    # Average score per category
+    return {
+        cat: sum(scores) / len(scores)
+        for cat, scores in category_scores.items()
+    }
 
 
 def generate_central_view(topic):
@@ -497,14 +523,12 @@ def mypage():
         cursor = conn.cursor()
 
         # Get debate details
-        cursor.execute('''
-            SELECT id, topic FROM debates
-        ''')
+        cursor.execute('SELECT id, topic, date FROM debates')
         debates = cursor.fetchall()
 
         debate_details = {}
 
-        for debate_id, topic in debates:
+        for debate_id, topic, date in debates:
             # Get stances and alignments
             cursor.execute('''
                 SELECT stance, comment FROM surveys WHERE user_id = ? AND debate_id = ? AND phase = 'pre'
@@ -537,11 +561,8 @@ def mypage():
                 score_dict.setdefault(t, {})[phase] = score
 
             debate_details[topic] = {
-                'pre_stance': pre[0] if pre else None,
-                'post_stance': post[0] if post else None,
-                'alignment_pre': alignment_pre[0] if alignment_pre else None,
-                'alignment_post': alignment_post[0] if alignment_post else None,
-                'topic_scores': score_dict
+                'debate_id': debate_id,
+                'date': date,
             }
 
         # Average alignment score
@@ -565,13 +586,42 @@ def mypage():
     else:
         avg_score = 'N/A'
         avg_label = 'N/A'
+    category_avg = get_category_averages(user_id)
+    politicmbti_result = calculate_political_type_from_categories(category_avg)
+
+    # Pass pre and post data aggregated across all debates
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute('''
+            SELECT topic, AVG(score)
+            FROM topic_alignment_scores
+            WHERE user_id = ? AND phase = 'pre'
+            GROUP BY topic
+        ''', (user_id,))
+        pre_data = {row[0]: round(row[1], 2) for row in cursor.fetchall()}
+
+        cursor.execute('''
+            SELECT topic, AVG(score)
+            FROM topic_alignment_scores
+            WHERE user_id = ? AND phase = 'post'
+            GROUP BY topic
+        ''', (user_id,))
+        post_data = {row[0]: round(row[1], 2) for row in cursor.fetchall()}
+
+    # Generate mock group average using existing utility
+    topics = list(set(pre_data.keys()) | set(post_data.keys()))
+    group_average = get_mock_group_average(topics)
 
     return render_template(
         'mypage.html',
         username=username,
         debate_details=debate_details,
         avg_alignment_score=avg_score,
-        avg_alignment_label=avg_label
+        avg_alignment_label=avg_label,
+        politicmbti=politicmbti_result,
+        pre_data=pre_data,
+        post_data=post_data,
+        group_average=group_average
     )
 
 
