@@ -25,99 +25,116 @@ political_profiles = {
         "nickname": "Idealistic Reformer",
         "careers": ["Social Policy Analyst", "NGO Worker", "Urban Planner"],
         "compatible_countries": ["Sweden", "Netherlands", "New Zealand"],
-        "caution": "May become overly idealistic and disconnected from political realities."
+        "description": "Passionate about progressive values, global cooperation, and community-based regulation.",
+        "caution": "May benefit from grounding ideals with practical experience."
     },
     "EPGI": {
         "nickname": "Visionary Advocate",
         "careers": ["Activist", "Human Rights Lawyer", "Political Strategist"],
         "compatible_countries": ["Canada", "Denmark", "Germany"],
-        "caution": "Tendency to be rigid or confrontational when ideals are challenged."
+        "description": "Driven by global justice and personal freedom, with a strong belief in social progress.",
+        "caution": "May need to consider diverse perspectives when advocating change."
     },
     "EPNR": {
         "nickname": "Inclusive Patriot",
         "careers": ["Public Educator", "Community Organizer", "Ethics Advisor"],
         "compatible_countries": ["Finland", "Ireland", "South Korea"],
-        "caution": "Struggles with balancing national identity and openness to change."
+        "description": "Supports cultural identity and national integrity while embracing inclusive progress.",
+        "caution": "May face challenges reconciling tradition with evolving norms."
     },
     "EPNI": {
         "nickname": "Justice Crusader",
         "careers": ["Public Defender", "Policy Campaigner", "Civic Educator"],
         "compatible_countries": ["Norway", "France", "Japan"],
-        "caution": "Can alienate others with uncompromising or radical positions."
+        "description": "Strong advocate for national integrity and freedom with an emphasis on ethical reform.",
+        "caution": "May occasionally struggle with compromise in policy discussions."
     },
     "ECGR": {
         "nickname": "Community Guardian",
         "careers": ["Local Government Official", "Social Services Director", "School Principal"],
         "compatible_countries": ["South Korea", "Austria", "Taiwan"],
-        "caution": "May resist necessary reforms or modernizations due to comfort with tradition."
+        "description": "Values social stability and shared responsibility within cultural traditions.",
+        "caution": "May prefer familiar systems over bold innovation."
     },
     "ECGI": {
         "nickname": "Principled Conservative",
         "careers": ["Constitutional Lawyer", "Ethics Committee Advisor", "Traditional Media Columnist"],
         "compatible_countries": ["Poland", "Hungary", "United States"],
-        "caution": "May overprioritize ideology at the cost of practical governance."
+        "description": "Upholds traditional values and individual liberty with a strong ethical framework.",
+        "caution": "May benefit from balancing values with adaptability."
     },
     "ECNR": {
         "nickname": "Localist Mediator",
         "careers": ["City Council Member", "Small Business Advocate", "Cultural Heritage Officer"],
         "compatible_countries": ["Japan", "Greece", "Spain"],
-        "caution": "Can become resistant to external influence or globalization."
+        "description": "Focuses on cultural preservation, local autonomy, and community-driven governance.",
+        "caution": "May find global trends challenging to integrate locally."
     },
     "ECNI": {
         "nickname": "Doctrinal Nationalist",
         "careers": ["National Security Analyst", "Political Columnist", "Legal Enforcer"],
         "compatible_countries": ["Russia", "China", "Iran"],
-        "caution": "May trend toward authoritarian or exclusionary policies."
+        "description": "Strongly prioritizes sovereignty, tradition, and national unity through structured policy.",
+        "caution": "May need to ensure inclusive dialogue in national policy."
     },
     "FPGR": {
         "nickname": "Market Innovator",
         "careers": ["Tech Entrepreneur", "Startup Consultant", "Innovation Officer"],
         "compatible_countries": ["Singapore", "Estonia", "United States"],
-        "caution": "Risk of overlooking social inequality in pursuit of growth."
+        "description": "Emphasizes economic freedom, global innovation, and pragmatic social growth.",
+        "caution": "May sometimes underplay social impacts of disruption."
     },
     "FPGI": {
         "nickname": "Liberal Internationalist",
         "careers": ["Diplomat", "Global Policy Analyst", "Tech Policy Director"],
         "compatible_countries": ["United Kingdom", "Canada", "Switzerland"],
-        "caution": "May face backlash for globalism in nationalist-leaning societies."
+        "description": "Champions open economies, global cooperation, and individual rights.",
+        "caution": "May need to be mindful of local sensitivities in global work."
     },
     "FPNR": {
         "nickname": "Pragmatic Modernist",
         "careers": ["Management Consultant", "Policy Advisor", "Urban Designer"],
         "compatible_countries": ["South Korea", "Germany", "Netherlands"],
-        "caution": "May struggle with long-term vision or ideological clarity."
+        "description": "Seeks practical solutions for modern society while preserving cultural identity.",
+        "caution": "May benefit from defining long-term principles more clearly."
     },
     "FPNI": {
         "nickname": "Freedom Strategist",
         "careers": ["Think Tank Fellow", "Security Advisor", "Military Strategist"],
         "compatible_countries": ["United States", "Israel", "South Korea"],
-        "caution": "Tends to justify intrusive policies in name of liberty or order."
+        "description": "Focused on security, personal freedom, and national independence.",
+        "caution": "May need to ensure liberty-focused policies remain balanced."
     },
     "FCGR": {
         "nickname": "Classic Realist",
         "careers": ["Civil Servant", "Fiscal Analyst", "Public Safety Officer"],
         "compatible_countries": ["Japan", "Germany", "Czech Republic"],
-        "caution": "May ignore emerging cultural shifts or public sentiment."
+        "description": "Grounded in order, regulation, and economic realism with a cultural foundation.",
+        "caution": "May occasionally overlook emerging cultural or social changes."
     },
     "FCGI": {
         "nickname": "Liberty Defender",
         "careers": ["Constitutional Scholar", "Defense Advisor", "Opinion Writer"],
         "compatible_countries": ["USA", "Australia", "UK"],
-        "caution": "Risk of rigidity and ideological tribalism."
+        "description": "Committed to individual liberty, cultural traditions, and strong institutions.",
+        "caution": "May want to balance consistency with flexibility in debates."
     },
     "FCNR": {
         "nickname": "Hawkish Libertarian",
         "careers": ["Policy Analyst", "Economic Development Lead", "Freedom Lobbyist"],
         "compatible_countries": ["South Korea", "USA", "Taiwan"],
-        "caution": "May ignore social consequences of economic policies."
+        "description": "Advocates for economic liberty, national strength, and practical governance.",
+        "caution": "May need to weigh economic freedom against social impact."
     },
     "FCNI": {
         "nickname": "Sovereign Purist",
         "careers": ["Border Policy Director", "Defense Strategist", "National Affairs Editor"],
         "compatible_countries": ["Hungary", "Russia", "India"],
-        "caution": "Prone to xenophobia or civil liberty restrictions."
-    },
+        "description": "Strong supporter of national sovereignty, tradition, and cultural integrity.",
+        "caution": "May benefit from fostering cross-cultural understanding."
+    }
 }
+
 def calculate_political_type_from_categories(category_avg):
     result_code = ""
 
@@ -133,7 +150,8 @@ def calculate_political_type_from_categories(category_avg):
         "nickname": profile.get("nickname", "Unknown"),
         "careers": profile.get("careers", []),
         "countries": profile.get("compatible_countries", []),
-        "caution": profile.get("caution", "No data available.")
+        "caution": profile.get("caution", "No data available."),
+        "description": profile.get("description", "No data available.")
     }
 
 def calculate_political_type(responses):

@@ -7,7 +7,8 @@
   <title>Debate View</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
   <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <link rel="icon" href="../static/images/favicon.png" type="image/png">
+
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
@@ -103,11 +104,7 @@
       </li>
     {% endfor %}
   </ul>
-  {% if news_articles|length > 5 %}
-    <div class="text-center mt-3">
-      <button id="toggleNewsBtn" class="btn btn-outline-secondary btn-sm">View More</button>
-    </div>
-  {% endif %}
+
 </div>
 {% endif %}
 
@@ -166,7 +163,7 @@ const chartHTML = `
   <div class="mt-2 p-4" style="border-radius: 16px;">
     <!-- Radar Chart -->
     <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Alignment Overview</h6>
       <div class="d-flex justify-content-center">
         <canvas id="radarChart" style="height: 300px; max-width: 520px;"></canvas>
       </div>
@@ -174,7 +171,7 @@ const chartHTML = `
 
     <!-- Bar Chart -->
     <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
       <div class="d-flex justify-content-center">
         <canvas id="barChart" style="height: 300px; max-width: 520px;"></canvas>
       </div>
@@ -182,7 +179,7 @@ const chartHTML = `
 
     <!-- Text Summary Table -->
     <div class="mt-4">
-      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Score Breakdown by Category</h6>
       <div class="table-responsive">
         <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
           <thead class="table-light">
@@ -243,6 +240,20 @@ const chartHTML = `
 
 
       </div>
+  <div class="card-custom">
+  <h5 class="section-title">Team Note (Shared)</h5>
+  {% if team_notes and team_notes.week1 %}
+    <div class="small text-muted mb-2">
+      Shared with your team{% if team_group %} ({{ team_group }}){% endif %}.
+    </div>
+    <div class="border rounded p-4">
+      {{ team_notes.week1 | safe }}
+    </div>
+  {% else %}
+    <p class="text-muted text-center">No team note for Week 1.</p>
+  {% endif %}
+</div>
+
     </div>
 
     <div class="tab-pane fade" id="week2">
@@ -307,7 +318,7 @@ const chartHTML2 = `
   <div class="mt-2 p-4" style="border-radius: 16px;">
     <!-- Radar Chart -->
     <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Radar View</h6>
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Alignment Overview</h6>
       <div class="d-flex justify-content-center">
         <canvas id="radarChartPost" style="height: 300px; max-width: 620px;"></canvas>
       </div>
@@ -315,16 +326,21 @@ const chartHTML2 = `
 
     <!-- Bar Chart -->
     <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Bar View</h6>
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
       <div class="d-flex justify-content-center">
 <canvas id="barChartPost" style="width: 100%; height: 400px; max-width: 1200px;"></canvas>
 
       </div>
     </div>
-
+         <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="barChart3" style="height: 300px; max-width: 520px;"></canvas>
+      </div>
+    </div>
     <!-- Text Summary Table -->
     <div class="mt-4">
-      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Exact Scores by Topic</h6>
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Score Breakdown by Category</h6>
       <div class="table-responsive">
         <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
           <thead class="table-light">
@@ -349,6 +365,7 @@ const chartHTML2 = `
               showRadarChart2(post_data);
               showBarChart2(post_data);
               fillTopicTable2(post_data);
+              showBarChartPost(post_data);
             }, 50);
           }
         });
@@ -386,6 +403,20 @@ const chartHTML2 = `
 
 
       </div>
+  <div class="card-custom">
+  <h5 class="section-title">Team Note (Shared)</h5>
+  {% if team_notes and team_notes.week3 %}
+    <div class="small text-muted mb-2">
+      Shared with your team{% if team_group %} ({{ team_group }}){% endif %}.
+    </div>
+    <div class="border rounded p-4">
+      {{ team_notes.week3 | safe }}
+    </div>
+  {% else %}
+    <p class="text-muted text-center">No team note for Week 3.</p>
+  {% endif %}
+</div>
+
     </div>
   </div>
 </div>
@@ -486,6 +517,9 @@ const baseOptions = {
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+      <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+
 <script>
   const isGenerating = {{ 'true' if is_generating_view else 'false' }};
   window.addEventListener('DOMContentLoaded', () => {
@@ -496,31 +530,41 @@ const baseOptions = {
 </script>
 <script>
 document.addEventListener("DOMContentLoaded", function () {
-  const btn = document.getElementById("toggleNewsBtn");
   const extraItems = document.querySelectorAll(".extra-news");
   let expanded = false;
 
-  if (btn) {
-    btn.addEventListener("click", function () {
-      expanded = !expanded;
-      extraItems.forEach(item => item.classList.toggle("d-none"));
-      btn.textContent = expanded ? "View Less" : "View More";
-    });
-  }
+//  if (btn) {
+//    btn.addEventListener("click", function () {
+//      expanded = !expanded;
+//      extraItems.forEach(item => item.classList.toggle("d-none"));
+//      btn.textContent = expanded ? "View Less" : "View More";
+//    });
+//  }
 });
   function fillTopicTable(topicAverages) {
   const tbody = document.getElementById("topicTableSummary");
   tbody.innerHTML = ""; // Clear old rows
 
-  Object.entries(topicAverages).forEach(([topic, score]) => {
+  Object.entries(topicAverages).forEach(([topic, userScore]) => {
+    const groupScore = groupAverage[topic] || 1; // fallback to 1 if missing
+
+    const userPercent = ((userScore - 1) / 4) * 100;
+    const groupPercent = ((groupScore - 1) / 4) * 100;
+    const diff = userPercent - groupPercent;
+
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${topic}</td>
-      <td class="fw-bold">${score.toFixed(1)}</td>
+      <td class="fw-bold">${userPercent.toFixed(0)}%</td>
+      <td>${groupPercent.toFixed(0)}%</td>
+      <td class="${diff > 0 ? 'text-success' : diff < 0 ? 'text-danger' : ''}">
+        ${diff > 0 ? '+' : ''}${diff.toFixed(0)}%
+      </td>
     `;
     tbody.appendChild(row);
   });
 }
+
 
 function showRadarChart(userData) {
   const labels = Object.keys(userData);
@@ -585,76 +629,107 @@ function showRadarChart(userData) {
     }
   });
 }
-
 function showBarChart(topicAverages) {
   const ctx = document.getElementById('barChart');
   if (!ctx) return console.error("Bar canvas not found.");
 
   const labels = Object.keys(topicAverages);
-  const data = Object.values(topicAverages);
+  const rawData = Object.values(topicAverages);
 
-  // Color palette: use more or adjust as needed
-  const colors = [
-    'rgba(255, 99, 132, 0.6)',   // Red
-    'rgba(54, 162, 235, 0.6)',   // Blue
-    'rgba(255, 206, 86, 0.6)',   // Yellow
-    'rgba(75, 192, 192, 0.6)',   // Teal
-    'rgba(153, 102, 255, 0.6)',  // Purple
-    'rgba(255, 159, 64, 0.6)',   // Orange
-    'rgba(108, 117, 125, 0.6)'   // Gray
-  ];
+  // Shift scores so that 3 is the center (0)
+  const data = rawData.map(score => score - 3);
 
-  const backgroundColors = labels.map((_, i) => colors[i % colors.length]);
-  const borderColors = backgroundColors.map(color => color.replace('0.6', '1'));
+  const colors = data.map(value =>
+    value > 0 ? 'rgba(54, 162, 235, 0.6)' :
+    value < 0 ? 'rgba(255, 99, 132, 0.6)' :
+                'rgba(200, 200, 200, 0.6)'  // neutral
+  );
+  const borders = colors.map(c => c.replace('0.6', '1'));
 
   new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
       datasets: [{
-        label: 'Average Score',
+        label: 'Deviation from 3',
         data,
-        backgroundColor: backgroundColors,
-        borderColor: borderColors,
+        backgroundColor: colors,
+        borderColor: borders,
         borderWidth: 1
       }]
     },
     options: {
-      responsive: false,
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
       scales: {
-        y: {
-          beginAtZero: true,
-          min: 0,
-          max: 5,
+        x: {
+          min: -2,
+          max: 2,
           ticks: {
-            stepSize: 1
+            stepSize: 1,
+            callback: value => value + 3 // Convert back to actual score
+          },
+          title: {
+            display: true,
+            text: 'Score (centered at 3)',
+            font: { size: 14 }
+          },
+          grid: {
+            color: '#e0e0e0'
           }
         },
-        x: {
+        y: {
           ticks: {
             font: { size: 12 }
           }
         }
       },
       plugins: {
-        legend: {
-          display: false
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `Score: ${(ctx.raw + 3).toFixed(1)}`
+          }
+        },
+        annotation: {
+          annotations: {
+            centerLine: {
+              type: 'line',
+              xMin: 0,
+              xMax: 0,
+              borderColor: '#333',
+              borderWidth: 2,
+              borderDash: [4, 4],
+            }
+          }
         }
       }
-    }
+    },
+    plugins: [Chart.registry.getPlugin('annotation')] //Register annotation plugin
   });
 }
 
 
- function fillTopicTable2(topicAverages) {
+function fillTopicTable2(topicAverages) {
   const tbody = document.getElementById("topicTableSummaryPost");
   tbody.innerHTML = ""; // Clear old rows
 
-  Object.entries(topicAverages).forEach(([topic, score]) => {
+  Object.entries(topicAverages).forEach(([topic, userScore]) => {
+    const groupScore = groupAverage[topic] || 1; // fallback to 1 if group score is missing
+
+    const userPercent = ((userScore - 1) / 4) * 100;
+    const groupPercent = ((groupScore - 1) / 4) * 100;
+    const diff = userPercent - groupPercent;
+
     const row = document.createElement("tr");
     row.innerHTML = `
       <td>${topic}</td>
-      <td class="fw-bold">${score.toFixed(1)}</td>
+      <td class="fw-bold">${userPercent.toFixed(0)}%</td>
+      <td>${groupPercent.toFixed(0)}%</td>
+      <td class="${diff > 0 ? 'text-success' : diff < 0 ? 'text-danger' : ''}">
+        ${diff > 0 ? '+' : ''}${diff.toFixed(0)}%
+      </td>
     `;
     tbody.appendChild(row);
   });
@@ -800,7 +875,86 @@ function showBarChart2(postData) {
     }
   });
 }
+  function showBarChartPost(topicAverages) {
+  const ctx = document.getElementById('barChart3');
+  if (!ctx) return console.error("Bar canvas not found.");
 
+  const labels = Object.keys(topicAverages);
+  const rawData = Object.values(topicAverages);
+
+  // Shift scores so that 3 is the center (0)
+  const data = rawData.map(score => score - 3);
+
+  const colors = data.map(value =>
+    value > 0 ? 'rgba(54, 162, 235, 0.6)' :
+    value < 0 ? 'rgba(255, 99, 132, 0.6)' :
+                'rgba(200, 200, 200, 0.6)'  // neutral
+  );
+  const borders = colors.map(c => c.replace('0.6', '1'));
+
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Deviation from 3',
+        data,
+        backgroundColor: colors,
+        borderColor: borders,
+        borderWidth: 1
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          min: -2,
+          max: 2,
+          ticks: {
+            stepSize: 1,
+            callback: value => value + 3 // Convert back to actual score
+          },
+          title: {
+            display: true,
+            text: 'Score (centered at 3)',
+            font: { size: 14 }
+          },
+          grid: {
+            color: '#e0e0e0'
+          }
+        },
+        y: {
+          ticks: {
+            font: { size: 12 }
+          }
+        }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: ctx => `Score: ${(ctx.raw + 3).toFixed(1)}`
+          }
+        },
+        annotation: {
+          annotations: {
+            centerLine: {
+              type: 'line',
+              xMin: 0,
+              xMax: 0,
+              borderColor: '#333',
+              borderWidth: 2,
+              borderDash: [4, 4],
+            }
+          }
+        }
+      }
+    },
+    plugins: [Chart.registry.getPlugin('annotation')] //Register annotation plugin
+  });
+}
 </script>
 
 </body>

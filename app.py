@@ -17,8 +17,168 @@ os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 
-
 from collections import defaultdict
+
+
+import urllib.parse
+import xml.etree.ElementTree as ET
+
+
+
+def fetch_research_papers(topic, debate_id, limit=6):
+    """
+    Use Crossref (JSON, no key) for broad coverage.
+    Fallback to arXiv (XML) if Crossref fails.
+    Returns [{'title','authors','year','source','url'}...]
+    """
+    try:
+        query = expand_topic_for_search(topic, debate_id) or topic
+        q = urllib.parse.quote(query)
+        url = f"https://api.crossref.org/works?rows={limit}&query={q}"
+        r = requests.get(url, timeout=8)
+        r.raise_for_status()
+        items = r.json().get('message', {}).get('items', [])
+        results = []
+        for it in items[:limit]:
+            title = " ".join(it.get('title', [])).strip() or "Untitled"
+            year = (it.get('published-print') or it.get('published-online') or {}).get('date-parts', [[None]])[0][0]
+            authors = []
+            for a in it.get('author', [])[:5]:
+                name = " ".join(filter(None, [a.get('given'), a.get('family')]))
+                if name:
+                    authors.append(name)
+            url_best = None
+            for l in it.get('link', []):
+                if l.get('URL'):
+                    url_best = l['URL']; break
+            if not url_best:
+                url_best = it.get('URL') or (f"https://doi.org/{it.get('DOI')}" if it.get('DOI') else None)
+            results.append({
+                'title': title,
+                'authors': authors,
+                'year': year,
+                'source': it.get('container-title', [''])[0] if it.get('container-title') else '',
+                'url': url_best
+            })
+        if results:
+            return results
+    except Exception:
+        pass
+
+    # Fallback: arXiv
+    try:
+        q = urllib.parse.quote(topic)
+        url = f"http://export.arxiv.org/api/query?search_query=all:{q}&start=0&max_results={limit}&sortBy=submittedDate&sortOrder=descending"
+        r = requests.get(url, timeout=8)
+        r.raise_for_status()
+        root = ET.fromstring(r.text)
+        ns = {'atom': 'http://www.w3.org/2005/Atom'}
+        out = []
+        for entry in root.findall('atom:entry', ns)[:limit]:
+            title = (entry.find('atom:title', ns).text or '').strip()
+            link = entry.find("atom:link[@type='text/html']", ns)
+            url_best = link.get('href') if link is not None else None
+            authors = [a.find('atom:name', ns).text for a in entry.findall('atom:author', ns)]
+            year = (entry.find('atom:published', ns).text or '')[:4]
+            out.append({
+                'title': title, 'authors': authors, 'year': year, 'source': 'arXiv', 'url': url_best
+            })
+        return out
+    except Exception:
+        return []
+def fetch_youtube_videos(topic, debate_id, limit=6):
+    if not YOUTUBE_API_KEY:
+        return []
+
+    # pull country from DB to improve regional relevance (optional)
+    country = None
+    try:
+        with sqlite3.connect(DB_PATH) as conn:
+            c = conn.cursor()
+            c.execute("SELECT country FROM debates WHERE id = ?", (debate_id,))
+            row = c.fetchone()
+            if row:
+                country = row[0]
+    except Exception:
+        pass
+
+    # Build a clean query (no noisy OR lists)
+    query = build_youtube_query(topic, country)
+
+    # Map a few common country names to region codes (extend as you need)
+    region_map = {
+        "United States": "US", "USA": "US", "U.S.": "US",
+        "South Korea": "KR", "Republic of Korea": "KR", "Korea": "KR",
+        "United Kingdom": "GB", "UK": "GB", "U.K.": "GB",
+        "Canada": "CA", "Australia": "AU", "India": "IN", "Japan": "JP"
+    }
+    region_code = region_map.get(country or "", None)
+
+    # Limit to recent content; adjust window if you want it tighter/looser
+    # Example: last 730 days (~2 years)
+    from datetime import datetime, timedelta, timezone
+    published_after = (datetime.now(timezone.utc) - timedelta(days=730)).isoformat()
+
+    try:
+        params = {
+            "part": "snippet",
+            "type": "video",
+            "maxResults": limit * 3,          # over-fetch then filter down
+            "q": query,
+            "key": YOUTUBE_API_KEY,
+            "safeSearch": "strict",
+            "order": "relevance",
+            "relevanceLanguage": "en",
+            "publishedAfter": published_after
+        }
+        if region_code:
+            params["regionCode"] = region_code
+
+        url = "https://www.googleapis.com/youtube/v3/search"
+        r = requests.get(url, params=params, timeout=8)
+        r.raise_for_status()
+        items = r.json().get('items', [])
+
+        # Lightweight post-filter: require at least one strong keyword in title or description
+        strong_terms = ["gun control", "gun policy", "gun regulation", "firearm law", "gun laws"]
+        def is_relevant(sn):
+            title = (sn.get("title") or "").lower()
+            desc  = (sn.get("description") or "").lower()
+            return any(term in title or term in desc for term in strong_terms)
+
+        filtered = []
+        for it in items:
+            sn = it.get("snippet", {})
+            if not sn:
+                continue
+            if is_relevant(sn):
+                vid = it["id"]["videoId"]
+                filtered.append({
+                    "title": sn["title"],
+                    "channel": sn["channelTitle"],
+                    "publishedAt": sn["publishedAt"][:10],
+                    "videoId": vid,
+                    "url": f"https://www.youtube.com/watch?v={vid}",
+                    "thumb": sn["thumbnails"]["medium"]["url"]
+                })
+
+        # Fallback: if the filter is too strict, degrade gracefully
+        results = filtered[:limit] if len(filtered) >= limit else [
+            {
+                "title": it["snippet"]["title"],
+                "channel": it["snippet"]["channelTitle"],
+                "publishedAt": it["snippet"]["publishedAt"][:10],
+                "videoId": it["id"]["videoId"],
+                "url": f"https://www.youtube.com/watch?v={it['id']['videoId']}",
+                "thumb": it["snippet"]["thumbnails"]["medium"]["url"]
+            }
+            for it in items[:limit]
+        ]
+        return results
+
+    except Exception:
+        return []
+
 
 def get_category_averages(user_id):
     with sqlite3.connect(DB_PATH) as conn:
@@ -105,6 +265,107 @@ def expand_topic_for_search(topic, debate_id):
     except Exception as e:
         print("Failed to expand topic:", e)
         return topic
+@app.route('/api/research')
+def api_research():
+    debate_id = request.args.get("debate_id", type=int)
+    if not debate_id:
+        return jsonify([])
+
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute("SELECT topic FROM debates WHERE id = ?", (debate_id,))
+        row = c.fetchone()
+    if not row:
+        return jsonify([])
+
+    topic = row[0]
+    data = fetch_research_papers(topic, debate_id, limit=6)
+    return jsonify(data)
+
+@app.route('/api/youtube')
+def api_youtube():
+    debate_id = request.args.get("debate_id", type=int)
+    if not debate_id:
+        return jsonify([])
+
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute("SELECT topic FROM debates WHERE id = ?", (debate_id,))
+        row = c.fetchone()
+
+    if not row:
+        # debate id doesn't exist -> empty list is fine for the client
+        return jsonify([])
+
+    topic = row[0]
+    data = fetch_youtube_videos(topic, debate_id, limit=6)
+    return jsonify(data)
+def get_user_group_name(user_id: int, debate_id: int):
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute("SELECT group_name FROM user_group WHERE user_id=? AND debate_id=?", (user_id, debate_id))
+        row = c.fetchone()
+        return row[0] if row else None
+
+@app.route('/team-note/<int:debate_id>/<week>', methods=['GET'])
+def get_team_note(debate_id, week):
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    if week not in ('week1', 'week3'):
+        return jsonify({"error": "Invalid week"}), 400
+
+    user_id = session['user_id']
+    group_name = get_user_group_name(user_id, debate_id)
+    if not group_name:
+        return jsonify({"error": "No group assigned"}), 400
+
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute("""
+          SELECT content FROM team_notes
+          WHERE debate_id=? AND week=? AND group_name=?
+        """, (debate_id, week, group_name))
+        row = c.fetchone()
+        content = row[0] if row else ""
+
+    return jsonify({"content": content, "group_name": group_name})
+
+@app.route('/save-team-note/<int:debate_id>/<week>', methods=['POST'])
+def save_team_note(debate_id, week):
+    if 'user_id' not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+    if week not in ('week1', 'week3'):
+        return jsonify({"error": "Invalid week"}), 400
+
+    data = request.get_json(silent=True) or {}
+    html_content = data.get('html', '')
+
+    user_id = session['user_id']
+    group_name = get_user_group_name(user_id, debate_id)
+    if not group_name:
+        return jsonify({"error": "No group assigned"}), 400
+
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        # upsert
+        c.execute("""
+            INSERT INTO team_notes (debate_id, week, group_name, content)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(debate_id, week, group_name)
+            DO UPDATE SET content=excluded.content, updated_at=CURRENT_TIMESTAMP
+        """, (debate_id, week, group_name, html_content))
+        conn.commit()
+
+    return jsonify({"status": "ok"})
+
+def build_youtube_query(topic: str, country: str | None = None):
+    # keep the main idea as an exact phrase + domain keywords
+    base = f"\"{topic}\" debate policy law regulation"
+    # optionally bias toward the country context (helps with ambiguous topics)
+    if country:
+        base += f" \"{country}\""
+    return base
+
 def fetch_news(topic, debate_id):
     search_query = expand_topic_for_search(topic, debate_id)
     url = f"https://newsapi.org/v2/everything?q={search_query}&language=en&sortBy=relevancy&pageSize=15&apiKey={NEWS_API_KEY}"
@@ -122,7 +383,7 @@ def fetch_news(topic, debate_id):
                     'publishedAt': article['publishedAt'],
                     'source': article['source']['name']
                 }
-                for article in articles
+                for article in articles[:6]
             ]
         else:
             print(f"NewsAPI Error: {response.status_code} - {response.text}")
@@ -493,7 +754,7 @@ def register():
         hashed_password = generate_password_hash(password)
         add_user(username, hashed_password, firstname, lastname)
 
-        flash("Registration successful. Please log in.")
+        flash("Registration successful. Please log in.", "success")
         return redirect(url_for('login'))
 
     return render_template('register.html')
@@ -509,7 +770,7 @@ def login():
             session['user_id'] = user[0]
             session['username'] = user[1]
             return redirect(url_for('dashboard'))
-        flash("Invalid username or password.")
+        flash("Invalid username or password.","danger")
     return render_template('login.html')
 @app.route('/mypage')
 def mypage():
@@ -678,7 +939,7 @@ def check_alignment_completion(user_id, debate_id, phase):
 @app.route('/logout')
 def logout():
     session.clear()
-    flash("Logged out successfully.")
+    flash("Logged out successfully.","success")
     return redirect(url_for('index'))
 @app.route("/debate/<int:debate_id>")
 def debate(debate_id):
@@ -687,15 +948,17 @@ def debate(debate_id):
 
     user_id = session["user_id"]
     alignment_questions = load_alignment_questions()
+
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
 
-        # Get debate info (now includes image)
+        # Get debate info
         cursor.execute("SELECT topic, country, date, is_active, image FROM debates WHERE id = ?", (debate_id,))
         row = cursor.fetchone()
         if not row:
             flash("Debate not found.", "danger")
             return redirect(url_for("dashboard"))
+
         topic, country, date, is_active, image = row
 
         # Assign group if not already assigned
@@ -718,10 +981,14 @@ def debate(debate_id):
             JOIN users u ON u.id = g.user_id
             WHERE g.debate_id = ? AND g.group_name = 'support'
         ''', (debate_id,))
-        left_group = [{'name': row[1], 'email': row[0]} for row in cursor.fetchall()]
-        if not row[4]:  # image is at index 4, so fetch central_view explicitly
+        left_group = [{'name': r[1], 'email': r[0]} for r in cursor.fetchall()]
+
+        # Get central view if image not uploaded
+        central_view_paragraph = None
+        if not image:
             cursor.execute("SELECT central_view FROM debates WHERE id = ?", (debate_id,))
-            central_view_paragraph = cursor.fetchone()[0]
+            result = cursor.fetchone()
+            central_view_paragraph = result[0] if result else None
 
         is_generating_view = False
         if not central_view_paragraph:
@@ -737,7 +1004,7 @@ def debate(debate_id):
             JOIN users u ON u.id = g.user_id
             WHERE g.debate_id = ? AND g.group_name = 'oppose'
         ''', (debate_id,))
-        right_group = [{'name': row[1], 'email': row[0]} for row in cursor.fetchall()]
+        right_group = [{'name': r[1], 'email': r[0]} for r in cursor.fetchall()]
 
         # Determine admin
         is_admin_flag = is_admin()
@@ -754,37 +1021,52 @@ def debate(debate_id):
         cursor.execute("SELECT 1 FROM surveys WHERE user_id = ? AND debate_id = ? AND phase = 'post'", (user_id, debate_id))
         post_submitted = cursor.fetchone() is not None
 
-        # Completed weeks info
-        cursor.execute("SELECT week FROM week_completion WHERE user_id = ? AND debate_id = ?", (user_id, debate_id))
-        weeks_done = [row[0] for row in cursor.fetchall()]
+        cursor.execute("SELECT week FROM week_completion WHERE debate_id = ?", (debate_id,))
+        weeks_done = [r[0] for r in cursor.fetchall()]
         week1_done = "week1" in weeks_done
         week2_done = "week2" in weeks_done
-    if image is None:
+
+    # Set image fallback
+    if not image:
         image = 'images/login_bg.jpg'
     else:
-        image = 'debate_images/'+image
+        image = 'debate_images/' + image
+
+    # Get saved notes
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
-        cursor.execute('''
-            SELECT week, content FROM notes
-            WHERE user_id = ? AND debate_id = ?
-        ''', (user_id, debate_id))
+        cursor.execute("SELECT week, content FROM notes WHERE user_id = ? AND debate_id = ?", (user_id, debate_id))
         notes = cursor.fetchall()
-        saved_notes = {row[0]: row[1] for row in notes} if notes else {}
+        saved_notes = {r[0]: r[1] for r in notes} if notes else {}
+
+    # Other info
     news_articles = fetch_news(topic, debate_id)
     alignment_questions = load_alignment_questions()
     topics = [q['Topic'] for q in alignment_questions]
     group_average = get_mock_group_average(topics)
     pre_done, pre_data = check_alignment_completion(user_id, debate_id, "pre")
     post_done, post_data = check_alignment_completion(user_id, debate_id, "post")
+
+
+    if week2_done:
+        active_week = "week3"
+    elif week1_done:
+        active_week = "week2"
+    else:
+        active_week = "week1"
+
+    print("week1_done:", week1_done)
+    print("week2_done:", week2_done)
+
     return render_template(
         "debate.html",
         debate_id=debate_id,
         topic=topic,
         pre_done=pre_done,
+        active_week=active_week,
         post_done=post_done,
-        pre_data= pre_data,
-        post_data= post_data,
+        pre_data=pre_data,
+        post_data=post_data,
         country=country,
         date=date,
         alignment_questions=alignment_questions,
@@ -804,8 +1086,9 @@ def debate(debate_id):
         post_submitted=post_submitted,
         week1_done=week1_done,
         week2_done=week2_done,
-        debate_image= image
+        debate_image=image
     )
+
 
 
 @app.route('/mark-week-complete/<int:debate_id>/<week>', methods=['POST'])
@@ -828,13 +1111,13 @@ def mark_week_complete(debate_id, week):
                 cursor.execute('''
                     INSERT OR IGNORE INTO week_completion (user_id, debate_id, week)
                     VALUES (?, ?, ?)
-                ''', (user_id, debate_id, week))
+                ''', (0, debate_id, week))
         else:
             # Normal user completes week only for themselves
             cursor.execute('''
-                INSERT OR IGNORE INTO week_completion (user_id, debate_id, week)
-                VALUES (?, ?, ?)
-            ''', (current_user, debate_id, week))
+                INSERT OR IGNORE INTO week_completion (debate_id, week)
+                VALUES (?, ?)
+            ''', (debate_id, week))
 
         conn.commit()
 
@@ -860,7 +1143,7 @@ def submit_survey(phase):
         if already_submitted:
             if request.is_json:
                 return jsonify({"status": "duplicate"})
-            flash("You have already submitted this survey.")
+            flash("You have already submitted this survey.","danger")
             return redirect(url_for('debate', debate_id=debate_id))
 
         if request.is_json:
@@ -941,7 +1224,7 @@ def submit_comment():
         cursor = conn.cursor()
         cursor.execute("INSERT INTO comments (user_id, comment) VALUES (?, ?)", (session['user_id'], comment))
         conn.commit()
-    flash("Comment submitted.")
+    flash("Comment submitted.","success")
     return redirect(url_for('debate'))
 
 @app.route('/moderator-summary', methods=['POST'])
@@ -954,9 +1237,21 @@ def submit_summary():
         cursor = conn.cursor()
         cursor.execute("INSERT INTO summaries (uploaded_by, summary) VALUES (?, ?)", (session['username'], summary))
         conn.commit()
-    flash("Summary uploaded.")
+    flash("Summary uploaded.","success")
     return redirect(url_for('debate'))
-# Add this block in view_debate route in app.py
+def get_team_note_html(debate_id: int, week: str, group_name: str | None) -> str | None:
+    if not group_name:
+        return None
+    with sqlite3.connect(DB_PATH) as conn:
+        c = conn.cursor()
+        c.execute("""
+            SELECT content
+            FROM team_notes
+            WHERE debate_id = ? AND week = ? AND group_name = ?
+        """, (debate_id, week, group_name))
+        row = c.fetchone()
+    return row[0] if row and row[0] else None
+
 @app.route('/view-debate/<int:debate_id>')
 def view_debate(debate_id):
     if 'user_id' not in session:
@@ -968,7 +1263,7 @@ def view_debate(debate_id):
         cursor.execute("SELECT topic, country, date FROM debates WHERE id = ?", (debate_id,))
         debate = cursor.fetchone()
         if not debate:
-            flash("Debate not found.")
+            flash("Debate not found.","success")
             return redirect(url_for('dashboard'))
 
         topic, country, date = debate
@@ -1033,12 +1328,20 @@ def view_debate(debate_id):
     alignment_questions = load_alignment_questions()
     topics = [q['Topic'] for q in alignment_questions]
     group_average = get_mock_group_average(topics)
+    group_name = get_user_group_name(user_id, debate_id)
+    team_notes = {
+        "week1": get_team_note_html(debate_id, "week1", group_name),
+        "week3": get_team_note_html(debate_id, "week3", group_name),
+    }
+    team_group = group_name
     return render_template('debate_view.html',
                            topic=topic,
                            country=country,
                            group_average=group_average,
                            pre_data=pre_data,
                            post_data=post_data,
+                            team_notes=team_notes,
+                            team_group=team_group,
                            date=date,
                            central_view=central_view,
                            saved_notes=saved_notes,

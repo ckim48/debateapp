@@ -5,11 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Debate Room</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
   <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css" rel="stylesheet">
 <!-- AOS Animate On Scroll -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.css" rel="stylesheet">
+  <link rel="icon" href="../static/images/favicon.png" type="image/png">
 
   <style>
     body { font-family: 'Segoe UI', sans-serif; background-color: #f0f2f5; color: #212529; }
@@ -89,6 +90,30 @@
   box-shadow: 0 16px 40px rgba(0,0,0,0.12);
   transform: translateY(-4px);
 }
+.list-group-flush .list-group-item { padding: 14px 0; }
+.paper-meta { font-size: .9rem; color: #6c757d; }
+.video-card { border-radius: 12px; background: #fff; box-shadow: 0 6px 18px rgba(0,0,0,.06); }
+.video-thumb { width: 100%; border-top-left-radius: 12px; border-top-right-radius: 12px; display:block; }
+
+.custom-tabs .nav-link {
+  color: #6c757d;              /* muted gray text */
+  background: #f1f3f5;         /* light gray background */
+  border: 1px solid #dee2e6;   /* subtle border */
+  border-bottom: none;         /* seamless with tab panel */
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.custom-tabs .nav-link:hover {
+  background: #e9ecef;         /* slightly darker hover */
+  color: #0f172a;              /* dark gray text */
+}
+
+.custom-tabs .nav-link.active {
+  background: #ffffff;         /* active tab blends with panel */
+  color: #0f172a;
+  border-color: #dee2e6 #dee2e6 #ffffff; /* keeps bottom border white */
+}
 
     .action-button { border-radius: 30px; padding: 8px 28px; border: none; background: #343a40; color: #fff; font-weight: 500; transition: background 0.2s; }
     .action-button:hover { background-color: #212529; }
@@ -123,463 +148,383 @@
 
 
 <div class="container">
-<div class="text-center">
-  <div class="section-title mt-5" data-aos="fade-up">Participants</div>
-</div>
-<div class="row mb-5 g-4">
-  <!-- Support Group -->
-  <div class="col-md-6">
-    <div class="card participant-card support" data-aos="fade-right">
-      <div class="card-body text-center">
-        <div class="icon-box">
-          <i class="bi bi-hand-thumbs-up-fill"></i>
-        </div>
-        <h5 class="fw-bold mt-3">Support Group ({{ left_group|length }})</h5>
-        {% if left_group %}
+  <div class="text-center">
+    <div class="section-title mt-5" data-aos="fade-up">Participants</div>
+  </div>
+
+  <div class="row mb-5 g-4">
+    <!-- Support Group -->
+    <div class="col-md-6">
+      <div class="card participant-card support" data-aos="fade-right">
+        <div class="card-body text-center">
+          <div class="icon-box">
+            <i class="bi bi-hand-thumbs-up-fill"></i>
+          </div>
+          <h5 class="fw-bold mt-3">Support Group ({{ left_group|length }})</h5>
+          {% if left_group %}
           <ul class="list-unstyled mt-3 mb-0">
             {% for member in left_group %}
-              <li><i class="bi bi-person-circle me-1"></i> <strong>{{ member.name.split(' ')[0] }}</strong> &lt;{{ member.email }}&gt;</li>
+            <li><i class="bi bi-person-circle me-1"></i> <strong>{{ member.name.split(' ')[0] }}</strong>
+              &lt;{{ member.email }}&gt;</li>
             {% endfor %}
           </ul>
-        {% else %}
+          {% else %}
           <p class="text-muted mt-3"><i class="bi bi-person-x-fill me-1"></i>No participants yet.</p>
-        {% endif %}
+          {% endif %}
+        </div>
       </div>
     </div>
-  </div>
 
-  <!-- Oppose Group -->
-  <div class="col-md-6">
-    <div class="card participant-card oppose" data-aos="fade-left">
-      <div class="card-body text-center">
-        <div class="icon-box">
-          <i class="bi bi-hand-thumbs-down-fill"></i>
-        </div>
-        <h5 class="fw-bold mt-3">Oppose Group ({{ right_group|length }})</h5>
-        {% if right_group %}
+    <!-- Oppose Group -->
+    <div class="col-md-6">
+      <div class="card participant-card oppose" data-aos="fade-left">
+        <div class="card-body text-center">
+          <div class="icon-box">
+            <i class="bi bi-hand-thumbs-down-fill"></i>
+          </div>
+          <h5 class="fw-bold mt-3">Oppose Group ({{ right_group|length }})</h5>
+          {% if right_group %}
           <ul class="list-unstyled mt-3 mb-0">
             {% for member in right_group %}
-              <li><i class="bi bi-person-circle me-1"></i> <strong>{{ member.name.split(' ')[0] }}</strong> &lt;{{ member.email }}&gt;</li>
+            <li><i class="bi bi-person-circle me-1"></i> <strong>{{ member.name.split(' ')[0] }}</strong>
+              &lt;{{ member.email }}&gt;</li>
             {% endfor %}
           </ul>
-        {% else %}
+          {% else %}
           <p class="text-muted mt-3"><i class="bi bi-person-x-fill me-1"></i>No participants yet.</p>
-        {% endif %}
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
-</div>
+<div class="card-custom custom-tabs mt-4" data-aos="fade-up">
+  <ul class="nav nav-pills justify-content-center mb-5" id="mediaTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-news" data-bs-toggle="pill" data-bs-target="#pane-news" type="button" role="tab">
+        News
+      </button>
+    </li>
+    <li class="nav-item ms-2" role="presentation">
+      <button class="nav-link" id="tab-papers" data-bs-toggle="pill" data-bs-target="#pane-papers" type="button" role="tab">
+        Research
+      </button>
+    </li>
+    <li class="nav-item ms-2" role="presentation">
+      <button class="nav-link" id="tab-youtube" data-bs-toggle="pill" data-bs-target="#pane-youtube" type="button" role="tab">
+        YouTube
+      </button>
+    </li>
+  </ul>
 
-<div class="card-custom mt-5">
-  <h5 class="section-title">Latest News About "{{ topic }}"</h5>
-  {% if news_articles %}
-    <ul class="list-group" id="newsList">
-      {% for article in news_articles %}
-        <li class="list-group-item news-item {% if loop.index > 5 %}d-none{% endif %}">
+  <div class="tab-content">
+    <!-- NEWS (server-rendered) -->
+    <div class="tab-pane fade show active" id="pane-news" role="tabpanel" aria-labelledby="tab-news">
+      <h5 class="section-title">Latest on “{{ topic }}”</h5>
+      {% if news_articles %}
+      <ul class="list-group" id="newsList">
+        {% for article in news_articles %}
+        <li class="list-group-item news-item {% if loop.index > 6 %}d-none{% endif %}">
           <a href="{{ article.url }}" target="_blank" class="fw-semibold">{{ article.title }}</a>
           <div class="small text-muted">{{ article.source }} – {{ article.publishedAt[:10] }}</div>
           <div class="text-muted">{{ article.description }}</div>
         </li>
-      {% endfor %}
-    </ul>
-    <div class="text-center mt-3">
-      <button class="action-button btn-outline-secondary" id="loadMoreNewsBtn">Show More</button>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-muted">No related news found.</p>
+      {% endif %}
     </div>
-  {% else %}
-    <p class="text-muted">No related news found.</p>
-  {% endif %}
+
+    <!-- RESEARCH (client-rendered) -->
+    <div class="tab-pane fade" id="pane-papers" role="tabpanel" aria-labelledby="tab-papers">
+      <h5 class="section-title">Research Articles</h5>
+      <div id="papersLoading" class="text-center py-3 small text-muted">Loading research…</div>
+      <ul class="list-group list-group-flush" id="papersList"></ul>
+      <div id="papersEmpty" class="text-center py-3 text-muted d-none">No papers found.</div>
+    </div>
+
+    <!-- YOUTUBE (client-rendered) -->
+    <div class="tab-pane fade" id="pane-youtube" role="tabpanel" aria-labelledby="tab-youtube">
+      <h5 class="section-title">YouTube</h5>
+      <div id="youtubeLoading" class="text-center py-3 small text-muted">Loading videos…</div>
+      <div class="row g-3" id="youtubeGrid"></div>
+      <div id="youtubeEmpty" class="text-center py-3 text-muted d-none">No videos found.</div>
+    </div>
+  </div>
 </div>
 
-<div class="card-custom mt-4" data-aos="fade-up">
-  <h5 class="section-title">Central View on the Topic</h5>
-  <p class="text-muted" style="font-size: 1.05rem;">{{ central_view }}</p>
+
+
+  <div class="card-custom mt-4" data-aos="fade-up">
+    <h5 class="section-title">Central View on the Topic</h5>
+    <p class="text-muted" style="font-size: 1.05rem;">{{ central_view }}</p>
+  </div>
 </div>
-</div>
+
 
 
 <div class="tab-wrapper">
-<ul class="nav nav-tabs" id="weekTabs" role="tablist">
-  <!-- WEEK 1 -->
-  <li class="nav-item" role="presentation">
-    <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#week1" type="button" role="tab">
-      WEEK 1
-    </button>
-  </li>
-
-  <!-- WEEK 2 -->
-  <li class="nav-item" role="presentation">
-    <button class="nav-link d-flex align-items-center justify-content-center gap-1 {% if not week1_done %}{% endif %}"
-            type="button" role="tab"
-            {% if week1_done %}
-              data-bs-toggle="tab" data-bs-target="#week2"
-            {% else %}
-              data-bs-toggle="tooltip" data-bs-title="Complete WEEK 1 to unlock"
-            {% endif %}>
-      WEEK 2
-      {% if not week1_done %}
-      <i class="bi bi-lock-fill text-muted"></i>
-      {% endif %}
-    </button>
-  </li>
-
-  <!-- WEEK 3 -->
-  <li class="nav-item" role="presentation">
-    <button class="nav-link d-flex align-items-center justify-content-center gap-1 {% if not week2_done %}{% endif %}"
-            type="button" role="tab"
-            {% if week2_done %}
-              data-bs-toggle="tab" data-bs-target="#week3"
-            {% else %}
-              data-bs-toggle="tooltip" data-bs-title="Complete WEEK 2 to unlock"
-            {% endif %}>
-      WEEK 3
-      {% if not week2_done %}
-      <i class="bi bi-lock-fill text-muted"></i>
-      {% endif %}
-    </button>
-  </li>
-</ul>
-
-
-  <div class="tab-content mt-4">
+  <ul class="nav nav-tabs" id="weekTabs" role="tablist">
     <!-- WEEK 1 -->
-    <div class="tab-pane fade show active" id="week1">
-      <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
-        <h5 class=""><strong>Week 1: Preparation Phase</strong></h5>
-        <ul class="mb-0">
-          <li>Discuss with your teammates and plan your strategy.</li>
-          <li>Read the recommended news articles and the AI's viewpoint.</li>
-          <li>Complete the <strong>Political Alignment Test AND Pre-Debate Survey</strong>.</li>
-          <li>Write your preparation notes using the editor provided.</li>
-        </ul>
-      </div>
-<div class="card-custom mb-4">
-  <h5 class="section-title">Pre-Political Alignment Test</h5>
-
-  {% if not pre_done %}
-    <!-- Alignment Form -->
-<form id="alignmentFormPre">
-  <p class="text-muted">Answer the following to determine your general alignment.</p>
-  {% for q in alignment_questions %}
-    {% set q_idx = loop.index0 %}
-    <div class="mb-3">
-      <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
-      {% for i in range(1, 6) %}
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="q{{ q_idx }}" value="{{ i }}">
-          <label class="form-check-label">
-            {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
-          </label>
-        </div>
-      {% endfor %}
-    </div>
-  {% endfor %}
-  <div class="text-end">
-    <button class="action-button" type="submit">Check Alignment</button>
-  </div>
-</form>
-
-
-<div id="alignmentResultPre" class="mt-4">
-  {% else %}
-    <!-- Show Pre Alignment Result -->
-    <div id="alignmentResultPre" class="mt-4">
-      <script>
-
-const chartHTML = `
-  <div class="mt-2 p-4" style="border-radius: 16px;">
-    <!-- Radar Chart -->
-    <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Alignment Overview</h6>
-      <div class="d-flex justify-content-center">
-        <canvas id="radarChart" style="height: 300px; max-width: 520px;"></canvas>
-      </div>
-    </div>
-
-    <!-- Bar Chart -->
-    <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
-      <div class="d-flex justify-content-center">
-        <canvas id="barChart" style="height: 300px; max-width: 520px;"></canvas>
-      </div>
-    </div>
-
-    <!-- Text Summary Table -->
-    <div class="mt-4">
-      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Score Breakdown by Category</h6>
-      <div class="table-responsive">
-        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
-          <thead class="table-light">
-            <tr>
-              <th>Topic</th>
-              <th>Your Score</th>
-              <th>Average of Others</th>
-              <th>Difference</th>
-            </tr>
-          </thead>
-          <tbody id="topicTableSummary">
-            <!-- Filled dynamically -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-`;
-        const pre_data = {{ pre_data | tojson }};
-        document.addEventListener("DOMContentLoaded", () => {
-          if (pre_data && Object.keys(pre_data).length > 0) {
-            document.getElementById('alignmentResultPre').innerHTML = chartHTML;
-            setTimeout(() => {
-              showRadarChart(pre_data);
-              showBarChart(pre_data);
-              fillTopicTable(pre_data);
-            }, 1000);
-          }
-        });
-      </script>
-    </div>
-  {% endif %}
-</div>
-
-
-      <!-- Pre-Debate Survey -->
-<div class="card-custom">
-  <h5 class="section-title">Pre-Debate Survey</h5>
-  {% if not pre_submitted %}
-  <div id="preSurveyWrapper">
-    <form id="preSurveyForm">
-      <label class="form-label">Your stance:</label><br>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="stance" value="support">
-        <label class="form-check-label">Support</label>
-      </div>
-      <div class="form-check form-check-inline">
-        <input class="form-check-input" type="radio" name="stance" value="oppose">
-        <label class="form-check-label">Oppose</label>
-      </div>
-      <div class="text-end mt-2">
-        <button class="action-button" type="submit">Submit Survey</button>
-      </div>
-    </form>
-  </div>
-  {% else %}
-<div id="alreadySubmittedMsg" class="mx-auto mt-0 p-3 rounded-3 text-center shadow-sm" style="max-width: 500px; background-color: #e6f4ea; border-left: 5px solid #198754; color: #198754;" data-aos="fade-up">
-  <i class="bi bi-check-circle-fill me-2"></i>
-  <span class="fw-semibold">You have already submitted the pre-debate survey.</span>
-</div>
-
-  {% endif %}
-</div>
-
-
-      <div id="preChartWrapper" style="display: none;">
-        <div class="card-custom">
-          <h5 class="section-title">Pre Survey Results</h5>
-          <canvas id="preSurveyChart"></canvas>
-        </div>
-      </div>
-
-      <!-- Notes -->
-      <div class="card-custom">
-        <h5 class="section-title">Preparation Note</h5>
-        <div id="editor-week1"></div>
-        <div class="text-end mt-2">
-          <button class="action-button btn-outline-light" onclick="summarizeNote('week1')">Summarize</button>
-
-          <button class="action-button" onclick="submitNote('week1')">Save Note</button>
-        </div>
-      </div>
-      {% if is_admin %}
-      <div class="text-center mt-3">
-      <button class="action-button" onclick="completeWeek('week1')">Complete</button>
-    </div>
-      {% endif %}
-
-    </div>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#week1" type="button" role="tab">
+        WEEK 1
+      </button>
+    </li>
 
     <!-- WEEK 2 -->
-    <div class="tab-pane fade" id="week2">
-    <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
-      <h5 class=""><strong>Week 2: Debate Session</strong></h5>
-      <ul class="mb-0">
-        <li>Engage in live debate against the other team.</li>
-        <li>Use the notes editor to record key points during discussion.</li>
-        <li>Focus on critical thinking and respectful argument.</li>
-      </ul>
-    </div>
-<!--      <div class="card-custom text-center">-->
-<!--        <h5 class="section-title">Debate Discussion</h5>-->
-<!--        <p class="text-muted">Please refer to your notes and engage in meaningful discussion this week.</p>-->
-<!--      </div>-->
-      <div class="card-custom">
-        <h5 class="section-title">Discussion Note</h5>
-        <div id="editor-week2"></div>
-        <div class="text-end mt-2">
-          <button class="action-button btn-outline-light" onclick="summarizeNote('week2')">Summarize</button>
-
-          <button class="action-button" onclick="submitNote('week2')">Save Note</button>
-        </div>
-      </div>
-      {% if is_admin %}
-            <div class="text-center mt-3">
-      <button class="action-button" onclick="completeWeek('week2')">Complete</button>
-    </div>
-      {% endif %}
-    </div>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link d-flex align-items-center justify-content-center gap-1 {% if not week1_done %}{% endif %}"
+              type="button" role="tab"
+              {% if week1_done %}
+                data-bs-toggle="tab" data-bs-target="#week2"
+              {% else %}
+                data-bs-toggle="tooltip" data-bs-title="Complete WEEK 1 to unlock"
+              {% endif %}>
+        WEEK 2
+        {% if not week1_done %}
+        <i class="bi bi-lock-fill text-muted"></i>
+        {% endif %}
+      </button>
+    </li>
 
     <!-- WEEK 3 -->
-    <div class="tab-pane fade" id="week3">
-      <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
-  <h5 class="e"><strong>Week 3: Wrap-up & Reflection</strong></h5>
-  <ul class="mb-0">
-    <li>Reflect on your team's performance—revenge if needed!</li>
-    <li>Write your final wrap-up notes summarizing the experience.</li>
-    <li>Complete the <strong>Political Alignment Test AND Post-Debate Survey</strong>.</li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link d-flex align-items-center justify-content-center gap-1 {% if not week2_done %}{% endif %}"
+              type="button" role="tab"
+              {% if week2_done %}
+                data-bs-toggle="tab" data-bs-target="#week3"
+              {% else %}
+                data-bs-toggle="tooltip" data-bs-title="Complete WEEK 2 to unlock"
+              {% endif %}>
+        WEEK 3
+        {% if not week2_done %}
+        <i class="bi bi-lock-fill text-muted"></i>
+        {% endif %}
+      </button>
+    </li>
   </ul>
-</div>
-<div class="card-custom mb-4">
-  <h5 class="section-title">Post-Political Alignment Test</h5>
 
-  {% if not post_done %}
-    <!-- Alignment Form -->
 
-<form id="alignmentFormPost">
-  <p class="text-muted">Answer the following to determine your general alignment.</p>
-  {% for q in alignment_questions %}
-    {% set q_idx = loop.index0 %}
-    <div class="mb-3">
-      <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
-      {% for i in range(1, 6) %}
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="post_q{{ q_idx }}" value="{{ i }}">
-          <label class="form-check-label">
-            {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
-          </label>
+    <div class="tab-content mt-4">
+      <div class="tab-pane fade show active" id="week1">
+        <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
+          <h5><strong>Week 1: Preparation Phase</strong></h5>
+          <ul class="mb-0">
+            <li>Discuss with your teammates and plan your strategy.</li>
+            <li>Read the recommended news articles and the AI's viewpoint.</li>
+            <li>Complete the <strong>Political Alignment Test AND Pre-Debate Survey</strong>.</li>
+            <li>Write your preparation notes using the editor provided.</li>
+          </ul>
         </div>
-      {% endfor %}
-    </div>
-  {% endfor %}
-  <div class="text-end">
-    <button class="action-button" type="submit">Check Alignment</button>
-  </div>
-</form>
-<div id="alignmentResultPost" class="mt-4">
-  {% else %}
-    <div id="alignmentResultPost" class="mt-4">
-      <script>
 
-const chartHTML2 = `
-  <div class="mt-2 p-4" style="border-radius: 16px;">
-    <!-- Radar Chart -->
-    <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Alignment Overview</h6>
-      <div class="d-flex justify-content-center">
-        <canvas id="radarChartPost" style="height: 300px; max-width: 620px;"></canvas>
-      </div>
-    </div>
+        <div class="card-custom mb-4">
+          <h5 class="section-title">Pre-Political Alignment Test</h5>
+          {% if not pre_done %}
+            <form id="alignmentFormPre">
+              <p class="text-muted">Answer the following to determine your general alignment.</p>
+              {% for q in alignment_questions %}
+                {% set q_idx = loop.index0 %}
+                <div class="mb-3">
+                  <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
+                  {% for i in range(1, 6) %}
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="q{{ q_idx }}" value="{{ i }}">
+                      <label class="form-check-label">
+                        {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+              <div class="text-end">
+                <button class="action-button" type="submit">Check Alignment</button>
+              </div>
+            </form>
+            <div id="alignmentResultPre" class="mt-4"></div>
+          {% else %}
+            <div id="alignmentResultPre" class="mt-4"></div>
+          {% endif %}
+        </div>
 
-    <!-- Bar Chart -->
-    <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Changes</h6>
-      <div class="d-flex justify-content-center">
-<canvas id="barChartPost" style="width: 100%; height: 400px; max-width: 1200px;"></canvas>
-
-      </div>
-    </div>
-
-
-     <div class="mb-5 text-center">
-      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
-      <div class="d-flex justify-content-center">
-        <canvas id="barChart3" style="height: 300px; max-width: 520px;"></canvas>
-      </div>
-    </div>
-    <!-- Text Summary Table -->
-    <div class="mt-4">
-      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Score Breakdown by Category</h6>
-      <div class="table-responsive">
-        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
-          <thead class="table-light">
-            <tr>
-              <th>Topic</th>
-              <th>Your Score</th>
-              <th>Average of Others</th>
-              <th>Difference</th>
-            </tr>
-          </thead>
-          <tbody id="topicTableSummaryPost">
-            <!-- Filled dynamically -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-`;
-        const post_data = {{ post_data | tojson }};
-        document.addEventListener("DOMContentLoaded", () => {
-          if (post_data && Object.keys(post_data).length > 0) {
-            document.getElementById('alignmentResultPost').innerHTML = chartHTML2;
-            setTimeout(() => {
-              showRadarChart2(post_data);
-              showBarChart2(post_data);
-              fillTopicTable2(post_data);
-              showBarChartPost(post_data);
-            }, 50);
-          }
-        });
-      </script>
-    </div>
-  {% endif %}
-</div>
-
-
-<div class="card-custom">
-  <h5 class="section-title">Post-Debate Survey</h5>
-  {% if not post_submitted %}
-  <form id="postSurveyForm">
-    <label class="form-label">Has your stance changed?</label><br>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" name="post_stance" value="support">
-      <label class="form-check-label">Support</label>
-    </div>
-    <div class="form-check form-check-inline">
-      <input class="form-check-input" type="radio" name="post_stance" value="oppose">
-      <label class="form-check-label">Oppose</label>
-    </div>
-    <textarea class="form-control mt-3" name="post_comment" placeholder="Feedback"></textarea>
-    <div class="text-end mt-2">
-      <button class="action-button" type="submit">Submit Post Survey</button>
-    </div>
-  </form>
-  {% else %}
-<div id="alreadySubmittedMsg" class="mx-auto mt-0 p-3 rounded-3 text-center shadow-sm" style="max-width: 500px; background-color: #e6f4ea; border-left: 5px solid #198754; color: #198754;" data-aos="fade-up">
-  <i class="bi bi-check-circle-fill me-2"></i>
-  <span class="fw-semibold">You have already submitted the post-debate survey.</span>
-</div>
-  {% endif %}
-</div>
-
-      <div id="postChartWrapper" style="display: none;">
         <div class="card-custom">
-          <h5 class="section-title">Post Survey Results</h5>
-          <canvas id="postSurveyChart"></canvas>
+          <h5 class="section-title">Pre-Debate Survey</h5>
+          {% if not pre_submitted %}
+            <div id="preSurveyWrapper">
+              <form id="preSurveyForm">
+                <label class="form-label">Your stance:</label><br>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="stance" value="support">
+                  <label class="form-check-label">Support</label>
+                </div>
+                <div class="form-check form-check-inline">
+                  <input class="form-check-input" type="radio" name="stance" value="oppose">
+                  <label class="form-check-label">Oppose</label>
+                </div>
+                <div class="text-end mt-2">
+                  <button class="action-button" type="submit">Submit Survey</button>
+                </div>
+              </form>
+            </div>
+          {% else %}
+            <div id="alreadySubmittedMsg" class="mx-auto mt-0 p-3 rounded-3 text-center shadow-sm" style="max-width: 500px; background-color: #e6f4ea; border-left: 5px solid #198754; color: #198754;" data-aos="fade-up">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <span class="fw-semibold">You have already submitted the pre-debate survey.</span>
+            </div>
+          {% endif %}
         </div>
+
+        <div id="preChartWrapper" style="display: none;">
+          <div class="card-custom">
+            <h5 class="section-title">Pre Survey Results</h5>
+            <canvas id="preSurveyChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card-custom">
+          <h5 class="section-title">Preparation Note</h5>
+          <div id="editor-week1"></div>
+          <div class="text-end mt-2">
+            <button class="action-button btn-outline-light" onclick="summarizeNote('week1')">Summarize</button>
+            <button class="action-button" onclick="submitNote('week1')">Save Note</button>
+          </div>
+        </div>
+        <div class="card-custom mt-4" data-aos="fade-up">
+  <h5 class="section-title">Team Note (Shared)</h5>
+  <div id="editor-week1-team"></div>
+  <div class="text-end mt-2">
+    <button class="action-button mt-3" onclick="saveTeamNote('week1')">Save Team Note</button>
+  </div>
+  <div class="small text-muted mt-2" id="teamNoteInfoWeek1"></div>
+</div>
+
+        {% if is_admin %}
+          <div class="text-center mt-3">
+            <button class="action-button" onclick="completeWeek('week1')">Complete</button>
+          </div>
+        {% endif %}
       </div>
 
-      <!-- Final Notes -->
-      <div class="card-custom">
-        <h5 class="section-title">Final Discussion Note</h5>
-        <div id="editor-week3"></div>
-        <div class="text-end mt-2">
-          <button class="action-button btn-outline-light" onclick="summarizeNote('week3')">Summarize</button>
-
-          <button class="action-button" onclick="submitNote('week3')">Save Note</button>
+      <div class="tab-pane fade {% if not week1_done %}d-none{% endif %}" id="week2">
+        <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
+          <h5><strong>Week 2: Debate Session</strong></h5>
+          <ul class="mb-0">
+            <li>Engage in live debate against the other team.</li>
+            <li>Use the notes editor to record key points during discussion.</li>
+            <li>Focus on critical thinking and respectful argument.</li>
+          </ul>
         </div>
+
+        <div class="card-custom">
+          <h5 class="section-title">Discussion Note</h5>
+          <div id="editor-week2"></div>
+          <div class="text-end mt-2">
+            <button class="action-button btn-outline-light" onclick="summarizeNote('week2')">Summarize</button>
+            <button class="action-button" onclick="submitNote('week2')">Save Note</button>
+          </div>
+        </div>
+        {% if is_admin %}
+          <div class="text-center mt-3">
+            <button class="action-button" onclick="completeWeek('week2')">Complete</button>
+          </div>
+        {% endif %}
+      </div>
+
+      <div class="tab-pane fade {% if not week2_done %}d-none{% endif %}" id="week3">
+        <div class="card-custom p-4 my-3 shadow-sm border-start border-secondary border-4 bg-light">
+          <h5><strong>Week 3: Wrap-up & Reflection</strong></h5>
+          <ul class="mb-0">
+            <li>Reflect on your team's performance—revenge if needed!</li>
+            <li>Write your final wrap-up notes summarizing the experience.</li>
+            <li>Complete the <strong>Political Alignment Test AND Post-Debate Survey</strong>.</li>
+          </ul>
+        </div>
+
+        <div class="card-custom mb-4">
+          <h5 class="section-title">Post-Political Alignment Test</h5>
+          {% if not post_done %}
+            <form id="alignmentFormPost">
+              <p class="text-muted">Answer the following to determine your general alignment.</p>
+              {% for q in alignment_questions %}
+                {% set q_idx = loop.index0 %}
+                <div class="mb-3">
+                  <label class="form-label">Q{{ loop.index }}: {{ q.Question }}</label>
+                  {% for i in range(1, 6) %}
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="post_q{{ q_idx }}" value="{{ i }}">
+                      <label class="form-check-label">
+                        {{ ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"][i-1] }}
+                      </label>
+                    </div>
+                  {% endfor %}
+                </div>
+              {% endfor %}
+              <div class="text-end">
+                <button class="action-button" type="submit">Check Alignment</button>
+              </div>
+            </form>
+            <div id="alignmentResultPost" class="mt-4"></div>
+          {% else %}
+            <div id="alignmentResultPost" class="mt-4"></div>
+          {% endif %}
+        </div>
+
+        <div class="card-custom">
+          <h5 class="section-title">Post-Debate Survey</h5>
+          {% if not post_submitted %}
+            <form id="postSurveyForm">
+              <label class="form-label">Has your stance changed?</label><br>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="post_stance" value="support">
+                <label class="form-check-label">Support</label>
+              </div>
+              <div class="form-check form-check-inline">
+                <input class="form-check-input" type="radio" name="post_stance" value="oppose">
+                <label class="form-check-label">Oppose</label>
+              </div>
+              <textarea class="form-control mt-3" name="post_comment" placeholder="Feedback"></textarea>
+              <div class="text-end mt-2">
+                <button class="action-button" type="submit">Submit Post Survey</button>
+              </div>
+            </form>
+          {% else %}
+            <div id="alreadySubmittedMsg" class="mx-auto mt-0 p-3 rounded-3 text-center shadow-sm" style="max-width: 500px; background-color: #e6f4ea; border-left: 5px solid #198754; color: #198754;" data-aos="fade-up">
+              <i class="bi bi-check-circle-fill me-2"></i>
+              <span class="fw-semibold">You have already submitted the post-debate survey.</span>
+            </div>
+          {% endif %}
+        </div>
+
+        <div id="postChartWrapper" style="display: none;">
+          <div class="card-custom">
+            <h5 class="section-title">Post Survey Results</h5>
+            <canvas id="postSurveyChart"></canvas>
+          </div>
+        </div>
+
+        <div class="card-custom">
+          <h5 class="section-title">Final Discussion Note</h5>
+          <div id="editor-week3"></div>
+          <div class="text-end mt-2">
+            <button class="action-button btn-outline-light" onclick="summarizeNote('week3')">Summarize</button>
+            <button class="action-button" onclick="submitNote('week3')">Save Note</button>
+          </div>
+        </div>
+<div class="card-custom mt-4" data-aos="fade-up">
+  <h5 class="section-title">Team Note (Shared)</h5>
+  <div id="editor-week3-team"></div>
+  <div class="text-end mt-2">
+    <button class="action-button mt-3" onclick="saveTeamNote('week3')">Save Team Note</button>
+  </div>
+  <div class="small text-muted mt-2" id="teamNoteInfoWeek3"></div>
+</div>
+
+
       </div>
     </div>
   </div>
 
 
-</div>
 <div id="loadingOverlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
   background: rgba(255,255,255,0.7); z-index: 9999; justify-content: center; align-items: center;">
   <div class="spinner-border text-dark" role="status">
@@ -603,10 +548,10 @@ const chartHTML2 = `
     </div>
   </div>
 </div>
-
 <script>
   const debateId = {{ debate_id }};
 </script>
+
 <script>
 async function loadPreSurveyChart() {
   const res = await fetch('/get-survey-data');
@@ -663,29 +608,23 @@ document.getElementById('preSurveyForm')?.addEventListener('submit', function (e
     body: JSON.stringify({ stance, comment })
   }).then(res => res.json()).then(data => {
     if (data.status === "ok" || data.status === "duplicate") {
-      // Hide the form wrapper
       const wrapper = document.getElementById("preSurveyWrapper");
       wrapper.style.display = "none";
 
-      // Dynamically insert the message
-const msg = document.createElement("div");
-msg.id = "alreadySubmittedMsg";
-msg.className = "mx-auto mt-0 p-3 rounded-3 text-center shadow-sm";
-msg.style.maxWidth = "500px";
-msg.style.backgroundColor = "#e6f4ea";
-msg.style.borderLeft = "5px solid #198754";
-msg.style.color = "#198754";
-msg.setAttribute("data-aos", "fade-up");
+      const msg = document.createElement("div");
+      msg.id = "alreadySubmittedMsg";
+      msg.className = "mx-auto mt-0 p-3 rounded-3 text-center shadow-sm";
+      msg.style.maxWidth = "500px";
+      msg.style.backgroundColor = "#e6f4ea";
+      msg.style.borderLeft = "5px solid #198754";
+      msg.style.color = "#198754";
+      msg.setAttribute("data-aos", "fade-up");
+      msg.innerHTML = `
+        <i class="bi bi-check-circle-fill me-2"></i>
+        <span class="fw-semibold">You have already submitted the pre-debate survey.</span>
+      `;
+      wrapper.parentNode.appendChild(msg);
 
-msg.innerHTML = `
-  <i class="bi bi-check-circle-fill me-2"></i>
-  <span class="fw-semibold">You have already submitted the pre-debate survey.</span>
-`;
-
-wrapper.parentNode.appendChild(msg);
-
-
-      // Load chart and scroll
       loadPreSurveyChart();
       setTimeout(() => {
         document.getElementById("preChartWrapper").scrollIntoView({ behavior: "smooth" });
@@ -708,29 +647,23 @@ document.getElementById('postSurveyForm')?.addEventListener('submit', function (
     body: JSON.stringify({ stance, comment })
   }).then(res => res.json()).then(data => {
     if (data.status === "ok" || data.status === "duplicate") {
-      // Hide the post-survey form
       const postForm = document.getElementById("postSurveyForm");
-postForm.style.display = "none";
+      postForm.style.display = "none";
 
-// Inject confirmation message right after the form
-const msg = document.createElement("div");
-msg.id = "postSurveySubmittedMsg";
+      const msg = document.createElement("div");
+      msg.id = "postSurveySubmittedMsg";
       msg.className = "mx-auto mt-0 p-3 rounded-3 text-center shadow-sm";
       msg.style.maxWidth = "500px";
       msg.style.backgroundColor = "#e6f4ea";
       msg.style.borderLeft = "5px solid #198754";
       msg.style.color = "#198754";
       msg.setAttribute("data-aos", "fade-up");
-
       msg.innerHTML = `
         <i class="bi bi-check-circle-fill me-2"></i>
         <span class="fw-semibold">You have already submitted the post-debate survey.</span>
       `;
-
       postForm.parentNode.appendChild(msg);
 
-
-      // Load chart and scroll to it
       loadPostSurveyChart();
       setTimeout(() => {
         document.getElementById("postChartWrapper").scrollIntoView({ behavior: "smooth" });
@@ -740,41 +673,175 @@ msg.id = "postSurveySubmittedMsg";
     }
   });
 });
-
 </script>
-<script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
-<script>
-const editors = {};
-const savedNotes = {{ saved_notes | tojson | safe }};
 
-['week1', 'week2', 'week3'].forEach(week => {
-  editors[week] = new Quill(`#editor-${week}`, {
-    theme: 'snow',
-    placeholder: `Write your ${week === 'week1' ? 'preparation' : week === 'week2' ? 'discussion' : 'final discussion'} notes...`,
-    modules: {
-      toolbar: [['bold', 'italic', 'underline'], ['link'], [{ list: 'ordered' }, { list: 'bullet' }], ['clean']]
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const weekToActivate = "{{ active_week or 'week1' }}";
+    const tabTrigger = document.querySelector(`button[data-bs-target="#${weekToActivate}"]`);
+    if (tabTrigger) {
+      const tab = new bootstrap.Tab(tabTrigger);
+      tab.show();
     }
   });
+</script>
 
-  // If a note was saved for this week, insert it
-  if (savedNotes[week]) {
-    editors[week].clipboard.dangerouslyPasteHTML(savedNotes[week]);
+<!-- SunEditor CSS & JS (via jsDelivr CDN) -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/css/suneditor.min.css">
+<script src="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/suneditor.min.js"></script>
+
+<script>
+/** SunEditor initialization + global handlers **/
+(function () {
+  if (!window.SUNEDITOR) {
+    console.error('SunEditor not found. Ensure CDN CSS/JS are loaded before this script.');
+    return;
+  }
+
+  // Make editors global
+  window.editors = window.editors || {};
+  window.teamEditors = window.teamEditors || {};
+
+  // Common toolbar + options
+  const commonOpts = (placeholder) => ({
+    height: 260,
+    minHeight: 180,
+    placeholder,
+    katex: null,
+    buttonList: [
+      ['undo', 'redo'],
+      ['bold', 'italic', 'underline', 'removeFormat'],
+      ['fontSize', 'formatBlock'],
+      ['list', 'align'],
+      ['link', 'image', 'table'],
+      ['horizontalRule']
+    ],
+    attributesWhitelist: {
+      all: 'style class',
+      table: 'border cellpadding cellspacing width',
+      td: 'colspan rowspan width'
+    }
+  });
+  const SAVED_NOTES = {{ saved_notes | tojson | safe }};
+['week1', 'week2', 'week3'].forEach(week => {
+  const sel = `#editor-${week}`;
+  const el = document.querySelector(sel);
+  if (!el) return;
+
+  const ph =
+    week === 'week1' ? 'Write your preparation notes...' :
+    week === 'week2' ? 'Write your discussion notes...' :
+                       'Write your final discussion notes...';
+
+  window.editors[week] = SUNEDITOR.create(el, commonOpts(ph));
+
+  // ⬇️ Load saved HTML if present
+  const saved = (SAVED_NOTES && SAVED_NOTES[week]) ? SAVED_NOTES[week] : '';
+  if (saved) {
+    try {
+      window.editors[week].setContents(saved);
+    } catch (e) {
+      console.warn('SunEditor.setContents failed, falling back to innerHTML:', e);
+      el.innerHTML = saved;
+    }
   }
 });
-</script>
-<script>
 
+  // Team editor init (week1 & week3)
+  function initTeamEditor(week) {
+    const sel = `#editor-${week}-team`;
+    const el = document.querySelector(sel);
+    if (!el) return;
+
+    const ph = `Write your team's shared notes for ${week.toUpperCase()}...`;
+    window.teamEditors[week] = SUNEDITOR.create(el, commonOpts(ph));
+
+    fetch(`/team-note/${debateId}/${week}`)
+      .then(r => r.json())
+      .then(({ content, group_name, error }) => {
+        if (error) return;
+        if (content) window.teamEditors[week].setContents(content);
+        const infoEl = document.getElementById(week === 'week1' ? 'teamNoteInfoWeek1' : 'teamNoteInfoWeek3');
+        if (infoEl && group_name) {
+          infoEl.textContent = `Shared with your team (${group_name}). Everyone on ${group_name} can edit.`;
+        }
+      })
+      .catch(() => {});
+  }
+
+  // Export for other scripts
+  window.initTeamEditor = initTeamEditor;
+
+
+  // Personal note actions
+  window.summarizeNote = function (week) {
+    const ed = window.editors[week];
+    if (!ed) return alert('Editor not found.');
+    const html = ed.getContents();
+
+    const overlay = document.getElementById('loadingOverlay');
+    if (overlay) overlay.style.display = 'flex';
+
+    fetch(`/summarize-note/${debateId}/${week}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html })
+    })
+    .then(r => r.json())
+    .then(d => {
+      if (d.summary) {
+        ed.insertHTML(`<p><br></p><p><strong>Summary:</strong> ${d.summary}</p>`);
+      } else if (d.error) {
+        alert('Error: ' + d.error);
+      }
+    })
+    .catch(() => alert('Request failed.'))
+    .finally(() => {
+      if (overlay) overlay.style.display = 'none';
+    });
+  };
+
+  window.submitNote = function (week) {
+    const ed = window.editors[week];
+    if (!ed) return alert('Editor not found.');
+    const html = ed.getContents();
+
+    fetch(`/save-note/${debateId}/${week}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html })
+    })
+    .then(r => r.json())
+    .then(d => alert(d.status === 'Note saved' ? 'Note saved successfully.' : 'Failed to save note.'))
+    .catch(() => alert('Error while saving note.'));
+  };
+
+  // Team note save
+  window.saveTeamNote = function (week) {
+    const html = window.teamEditors?.[week]?.getContents() || '';
+    fetch(`/save-team-note/${debateId}/${week}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ html })
+    })
+    .then(r => r.json())
+    .then(d => alert(d.status === 'ok' ? 'Team note saved.' : 'Failed to save team note.'))
+    .catch(() => alert('Error while saving team note.'));
+  };
+
+})();
+</script>
+
+<script>
+/** POST alignment handling (kept as-is; unrelated to editors) **/
 document.getElementById('alignmentFormPost')?.addEventListener('submit', function (e) {
   e.preventDefault();
   const form = e.target;
 
-const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked')).map(input => {
-  const index = parseInt(input.name.replace('post_q', ''));
-  return {
-    topic: questionTopics[index],
-    value: parseInt(input.value)
-  };
-});
+  const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked')).map(input => {
+    const index = parseInt(input.name.replace('post_q', ''));
+    return { topic: questionTopics[index], value: parseInt(input.value) };
+  });
 
   if (responses.length !== questionTopics.length) {
     alert("Please answer all questions.");
@@ -783,45 +850,33 @@ const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked'
 
   const topicScores = {};
   const topicCounts = {};
-
   responses.forEach(({ topic, value }) => {
     topicScores[topic] = (topicScores[topic] || 0) + value;
     topicCounts[topic] = (topicCounts[topic] || 0) + 1;
   });
-
   const topicAverages = {};
-  for (const topic in topicScores) {
-    topicAverages[topic] = topicScores[topic] / topicCounts[topic];
-  }
+  for (const topic in topicScores) topicAverages[topic] = topicScores[topic] / topicCounts[topic];
 
   const chartHTML = `
     <div class="mt-2 p-4" style="border-radius: 16px; ">
-
-
-      <!-- Radar Chart -->
       <div class="mb-5 text-center">
         <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Alignment Overvieww</h6>
         <div class="d-flex justify-content-center">
           <canvas id="radarChartPost" style="height: 300px; max-width: 520px;"></canvas>
         </div>
       </div>
-
-      <!-- Bar Chart -->
       <div class="mb-5 text-center">
         <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Changes</h6>
         <div class="d-flex justify-content-center">
           <canvas id="barChartPost" style="height: 300px; max-width: 520px;"></canvas>
         </div>
       </div>
-
       <div class="mb-5 text-center">
         <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
         <div class="d-flex justify-content-center">
           <canvas id="barChart3" style="height: 300px; max-width: 520px;"></canvas>
         </div>
       </div>
-
-      <!-- Table Summary -->
       <div class="mt-4">
         <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Score Breakdown by Category</h6>
         <div class="table-responsive">
@@ -834,23 +889,17 @@ const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked'
                 <th>Difference</th>
               </tr>
             </thead>
-            <tbody id="topicTableSummaryPost">
-              <!-- Filled dynamically -->
-            </tbody>
+            <tbody id="topicTableSummaryPost"></tbody>
           </table>
         </div>
       </div>
     </div>
   `;
 
-  // Send to backend
   fetch(`/save-alignment/{{ debate_id }}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      topic_scores: topicAverages,
-      phase: 'post'
-    })
+    body: JSON.stringify({ topic_scores: topicAverages, phase: 'post' })
   }).then(res => {
     if (res.ok) {
       const resultDiv = document.getElementById("alignmentResultPost");
@@ -863,7 +912,6 @@ const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked'
         showBarChart2(topicAverages);
         fillTopicTable2(topicAverages);
         showBarChartPost(post_data);
-
         const radarCanvas = document.getElementById("radarChartPost");
         if (radarCanvas) radarCanvas.scrollIntoView({ behavior: "smooth", block: "start" });
       }, 100);
@@ -872,56 +920,21 @@ const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked'
     }
   });
 });
-
-
-function summarizeNote(week) {
-  const html = editors[week].root.innerHTML;
-
-  // Show loading overlay
-  document.getElementById("loadingOverlay").style.display = "flex";
-
-  fetch(`/summarize-note/${debateId}/${week}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html: html })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.summary) {
-      editors[week].clipboard.dangerouslyPasteHTML(
-        editors[week].getLength() - 1,
-        `<br><p><strong>Summary:</strong> ${data.summary}</p>`
-      );
-    } else if (data.error) {
-      alert("Error: " + data.error);
-    }
-  })
-  .catch(error => {
-    alert("Request failed.");
-    console.error(error);
-  })
-  .finally(() => {
-    // Hide loading overlay
-    document.getElementById("loadingOverlay").style.display = "none";
-  });
-}
-
 </script>
-
-</script>
-
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 <script>
   const groupAverage = {{ group_average | tojson | safe }};
 
-document.querySelectorAll('.nav-link.disabled').forEach(btn => {
-  btn.addEventListener('click', e => {
-    e.preventDefault();
-    alert("Please complete the previous week's task first.");
+  document.querySelectorAll('.nav-link.disabled').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.preventDefault();
+      alert("Please complete the previous week's task first.");
+    });
   });
-});
 </script>
+
 <script>
 document.querySelectorAll('.nav-link.disabled').forEach(btn => {
   btn.addEventListener('click', e => {
@@ -934,21 +947,22 @@ document.querySelectorAll('.nav-link.disabled').forEach(btn => {
 const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]');
 tooltipTriggerList.forEach(el => new bootstrap.Tooltip(el));
 </script>
+
 <script>
 function completeWeek(week) {
   fetch(`/mark-week-complete/{{ debate_id }}/${week}`, {
     method: "POST"
   }).then(res => res.json()).then(data => {
     if (data.status === "ok") {
-      alert(`You have completed ${week.toUpperCase()}. Reloading...`);
+      alert(`You have completed ${week.toUpperCase()}. Week ${parseInt(week.slice(-1)) + 1} is now available.`);
       location.reload();
     } else {
       alert("Failed to mark week complete.");
     }
   });
 }
-
 </script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/aos/2.3.4/aos.js"></script>
 <script>
 AOS.init({
@@ -956,117 +970,22 @@ AOS.init({
   easing: 'ease-in-out',
   once: true,
 });
-document.getElementById('loadMoreNewsBtn')?.addEventListener('click', function () {
-  const hiddenItems = document.querySelectorAll('.news-item.d-none');
-  const toShow = Array.from(hiddenItems).slice(0, 5); // Show 5 more
-  toShow.forEach(item => item.classList.remove('d-none'));
-
-  if (document.querySelectorAll('.news-item.d-none').length === 0) {
-    this.style.display = 'none';
-  }
-});
-</script>
-<script>
-function submitNote(week) {
-  const html = editors[week].root.innerHTML;
-
-  fetch(`/save-note/${debateId}/${week}`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ html: html })
-  })
-  .then(response => response.json())
-  .then(data => {
-    if (data.status === "Note saved") {
-      alert("Note saved successfully.");
-    } else {
-      alert("Failed to save note.");
-    }
-  })
-  .catch(error => {
-    alert("Error while saving note.");
-    console.error(error);
-  });
-}
-</script>
-<script>
-  const firstAssigned = {{ 'true' if first_assignment else 'false' }};
-  const groupName = "{{ group_name }}";
-
-  if (firstAssigned === true || firstAssigned === 'true') {
-    document.addEventListener('DOMContentLoaded', () => {
-      const groupText = document.getElementById('assignedGroupText');
-      if (groupName === 'support') {
-        groupText.innerHTML = '<span class="text-success">Support</span>';
-      } else {
-        groupText.innerHTML = '<span class="text-danger">Oppose</span>';
-      }
-      const modal = new bootstrap.Modal(document.getElementById('groupAssignmentModal'));
-      modal.show();
-    });
-  }
 </script>
 
-</script>
-<!-- Grayscale Floating Help Icon -->
-<button class="btn shadow" id="helpBtn"
-  style="position: fixed; bottom: 20px; right: 20px; width: 52px; height: 52px;
-         background-color: #6c757d; color: white; border-radius: 50%; z-index: 1050;"
-  data-bs-toggle="modal" data-bs-target="#instructionModal">
-  <i class="bi bi-question-lg fs-4"></i>
-</button>
-<!-- Grayscale Instruction Modal -->
-<div class="modal fade" id="instructionModal" tabindex="-1" aria-labelledby="instructionModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-    <div class="modal-content">
-      <div class="modal-header bg-light">
-        <h5 class="modal-title fw-bold text-dark" id="instructionModalLabel">Debate Instructions by Week</h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body px-4">
-        <div class="mb-4">
-          <h6 class="fw-semibold">Week 1 – Preparation</h6>
-          <ul class="text-muted">
-            <li>Discuss with your teammates and plan your strategy.</li>
-            <li>Read the latest news articles and the AI's central view.</li>
-            <li>Write preparation notes using the editor provided.</li>
-            <li>Complete the <strong>Pre-Debate Survey</strong>.</li>
-          </ul>
-        </div>
-        <div class="mb-4">
-          <h6 class="fw-semibold">Week 2 – Debate</h6>
-          <ul class="text-muted">
-            <li>Participate in the live debate against the other team.</li>
-            <li>Use the notes editor to document key arguments.</li>
-            <li>Collaborate with your team to refine your position.</li>
-          </ul>
-        </div>
-        <div>
-          <h6 class="fw-semibold">Week 3 – Wrap-Up</h6>
-          <ul class="text-muted">
-            <li>Reflect on the debate outcomes—retaliate if needed.</li>
-            <li>Write final wrap-up notes summarizing the experience.</li>
-            <li>Complete the <strong>Post-Debate Survey</strong>.</li>
-          </ul>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
+<!-- Chart.js + annotation plugin -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
 
 <script>
-    const questionTopics = {{ alignment_questions | tojson | safe }}.map(q => q.Topic);
+/* ---------------------------------
+   PRE-DEBATE ALIGNMENT FORM
+---------------------------------- */
+const questionTopics = {{ alignment_questions | tojson | safe }}.map(q => q.Topic);
 
 document.getElementById('alignmentFormPre')?.addEventListener('submit', function (e) {
   e.preventDefault();
   const form = e.target;
 
-  // Extract topic mapping from server-side data
-
-  // Gather selected answers with their associated topics
   const responses = Array.from(form.querySelectorAll('input[type="radio"]:checked')).map(input => ({
     topic: questionTopics[parseInt(input.name.replace('q', ''))],
     value: parseInt(input.value)
@@ -1077,56 +996,56 @@ document.getElementById('alignmentFormPre')?.addEventListener('submit', function
     return;
   }
 
-  // Aggregate values per topic
   const topicScores = {};
   const topicCounts = {};
-
   responses.forEach(({ topic, value }) => {
     topicScores[topic] = (topicScores[topic] || 0) + value;
     topicCounts[topic] = (topicCounts[topic] || 0) + 1;
   });
-
-  // Compute averages
   const topicAverages = {};
-  for (const topic in topicScores) {
-    topicAverages[topic] = topicScores[topic] / topicCounts[topic];
-  }
+  for (const t in topicScores) topicAverages[t] = topicScores[t] / topicCounts[t];
 
-  // Save to backend
   fetch(`/save-alignment/{{ debate_id }}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      topic_scores: topicAverages,
-      phase: "pre"
-    })
+    body: JSON.stringify({ topic_scores: topicAverages, phase: "pre" })
   }).then(res => {
-    if (!res.ok) {
-      alert("Failed to save your results. Please try again.");
-    }
+    if (!res.ok) alert("Failed to save your results. Please try again.");
   });
 
+  const resultDiv = document.getElementById('alignmentResultPre');
+  resultDiv.innerHTML = chartHTML;
+  resultDiv.style.display = "block";
+  form.style.display = "none";
+
+  setTimeout(() => {
+    showRadarChart(topicAverages);
+    showBarChart(topicAverages);
+    fillTopicTable(topicAverages);
+    const radarCanvas = document.getElementById("radarChart");
+    if (radarCanvas) {
+      radarCanvas.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, 100);
+});
+
+/* ---------------------------------
+   CHART HTML TEMPLATES
+---------------------------------- */
 const chartHTML = `
-  <div class="mt-2 p-4" style="border-radius: 16px;  ">
-
-
-    <!-- Radar Chart -->
+  <div class="mt-2 p-4" style="border-radius: 16px;">
     <div class="mb-5 text-center">
       <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Alignment Overview</h6>
       <div class="d-flex justify-content-center">
         <canvas id="radarChart" style="height: 300px; max-width: 520px;"></canvas>
       </div>
     </div>
-
-    <!-- Bar Chart -->
     <div class="mb-5 text-center">
       <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
       <div class="d-flex justify-content-center">
         <canvas id="barChart" style="height: 300px; max-width: 520px;"></canvas>
       </div>
     </div>
-
-    <!-- Text Summary Table -->
     <div class="mt-4">
       <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Score Breakdown by Category</h6>
       <div class="table-responsive">
@@ -1139,40 +1058,60 @@ const chartHTML = `
               <th>Difference</th>
             </tr>
           </thead>
-          <tbody id="topicTableSummary">
-            <!-- Filled dynamically -->
-          </tbody>
+          <tbody id="topicTableSummary"></tbody>
         </table>
       </div>
     </div>
   </div>
 `;
 
+const chartHTML2 = `
+  <div class="mt-2 p-4" style="border-radius: 16px;">
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Alignment Overview</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="radarChartPost" style="height: 300px; max-width: 620px;"></canvas>
+      </div>
+    </div>
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Changes</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="barChartPost" style="width: 100%; height: 400px; max-width: 1200px;"></canvas>
+      </div>
+    </div>
+    <div class="mb-5 text-center">
+      <h6 class="fw-semibold mb-3" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
+      <div class="d-flex justify-content-center">
+        <canvas id="barChart3" style="height: 300px; max-width: 520px;"></canvas>
+      </div>
+    </div>
+    <div class="mt-4">
+      <h6 class="fw-semibold mb-3 text-center" style="font-size: 1.1rem; color: #495057;">Score Breakdown by Category</h6>
+      <div class="table-responsive">
+        <table class="table table-sm table-bordered text-center align-middle" style="max-width: 720px; margin: 0 auto;">
+          <thead class="table-light">
+            <tr>
+              <th>Topic</th>
+              <th>Your Score</th>
+              <th>Average of Others</th>
+              <th>Difference</th>
+            </tr>
+          </thead>
+          <tbody id="topicTableSummaryPost"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+`;
 
-  const resultDiv = document.getElementById('alignmentResultPre');
-  resultDiv.innerHTML = chartHTML;
-  resultDiv.style.display = "block";
-  form.style.display = "none";
-
-  // Render charts
-setTimeout(() => {
-  showRadarChart(topicAverages);
-  showBarChart(topicAverages);
-  fillTopicTable(topicAverages);
-
-  const radarCanvas = document.getElementById("radarChart");
-  if (radarCanvas) {
-    radarCanvas.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-}, 100);
-});
+/* ---------------------------------
+   TABLE RENDERERS
+---------------------------------- */
 function fillTopicTable(topicAverages) {
   const tbody = document.getElementById("topicTableSummary");
-  tbody.innerHTML = ""; // Clear old rows
-
+  tbody.innerHTML = "";
   Object.entries(topicAverages).forEach(([topic, userScore]) => {
-    const groupScore = groupAverage[topic] || 1; // fallback to 1 if missing
-
+    const groupScore = groupAverage[topic] || 1;
     const userPercent = ((userScore - 1) / 4) * 100;
     const groupPercent = ((groupScore - 1) / 4) * 100;
     const diff = userPercent - groupPercent;
@@ -1184,13 +1123,35 @@ function fillTopicTable(topicAverages) {
       <td>${groupPercent.toFixed(0)}%</td>
       <td class="${diff > 0 ? 'text-success' : diff < 0 ? 'text-danger' : ''}">
         ${diff > 0 ? '+' : ''}${diff.toFixed(0)}%
-      </td>
-    `;
+      </td>`;
     tbody.appendChild(row);
   });
 }
 
+function fillTopicTable2(topicAverages) {
+  const tbody = document.getElementById("topicTableSummaryPost");
+  tbody.innerHTML = "";
+  Object.entries(topicAverages).forEach(([topic, userScore]) => {
+    const groupScore = groupAverage[topic] || 1;
+    const userPercent = ((userScore - 1) / 4) * 100;
+    const groupPercent = ((groupScore - 1) / 4) * 100;
+    const diff = userPercent - groupPercent;
 
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${topic}</td>
+      <td class="fw-bold">${userPercent.toFixed(0)}%</td>
+      <td>${groupPercent.toFixed(0)}%</td>
+      <td class="${diff > 0 ? 'text-success' : diff < 0 ? 'text-danger' : ''}">
+        ${diff > 0 ? '+' : ''}${diff.toFixed(0)}%
+      </td>`;
+    tbody.appendChild(row);
+  });
+}
+
+/* ---------------------------------
+   CHART RENDERERS
+---------------------------------- */
 function showRadarChart(userData) {
   const labels = Object.keys(userData);
   const userScores = Object.values(userData);
@@ -1202,161 +1163,56 @@ function showRadarChart(userData) {
     data: {
       labels,
       datasets: [
-        {
-          label: "Your Scores",
-          data: userScores,
-          backgroundColor: "rgba(54, 162, 235, 0.3)",
-          borderColor: "rgba(54, 162, 235, 1)",
-          pointBackgroundColor: "rgba(54, 162, 235, 1)"
-        },
-        {
-          label: "Average of Others",
-          data: groupScores,
-          backgroundColor: "rgba(128, 128, 128, 0.2)",
-          borderColor: "rgba(128, 128, 128, 0.9)",
-          pointBackgroundColor: "rgba(128, 128, 128, 0.9)"
-        }
+        { label: "Your Scores", data: userScores, backgroundColor: "rgba(54, 162, 235, 0.3)", borderColor: "rgba(54, 162, 235, 1)", pointBackgroundColor: "rgba(54, 162, 235, 1)" },
+        { label: "Average of Others", data: groupScores, backgroundColor: "rgba(128, 128, 128, 0.2)", borderColor: "rgba(128, 128, 128, 0.9)", pointBackgroundColor: "rgba(128, 128, 128, 0.9)" }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false, // allows us to manually size it
-      layout: {
-        padding: 0 // removes extra layout padding
-      },
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            padding: 6,         // reduce space inside legend
-            boxWidth: 14,
-            font: {
-              size: 12
-            }
-          }
-        }
-      },
-      scales: {
-        r: {
-          min: 1,
-          max: 5,
-          ticks: {
-            stepSize: 1,
-            backdropColor: 'transparent'
-          },
-          pointLabels: {
-            font: {
-              size: 12
-            }
-          }
-        }
-      }
+      responsive: true, maintainAspectRatio: false, layout: { padding: 0 },
+      plugins: { legend: { position: 'top', labels: { padding: 6, boxWidth: 14, font: { size: 12 } } } },
+      scales: { r: { min: 1, max: 5, ticks: { stepSize: 1, backdropColor: 'transparent' }, pointLabels: { font: { size: 12 } } } }
     }
   });
 }
-function showBarChart(topicAverages) {
-  const ctx = document.getElementById('barChart');
-  if (!ctx) return console.error("Bar canvas not found.");
 
+function showBarChart(topicAverages) {
+  const ctx = document.getElementById('barChart'); if (!ctx) return console.error("Bar canvas not found.");
   const labels = Object.keys(topicAverages);
   const rawData = Object.values(topicAverages);
-
-  // Shift scores so that 3 is the center (0)
   const data = rawData.map(score => score - 3);
 
   const colors = data.map(value =>
-    value > 0 ? 'rgba(54, 162, 235, 0.6)' :
-    value < 0 ? 'rgba(255, 99, 132, 0.6)' :
-                'rgba(200, 200, 200, 0.6)'  // neutral
+    value > 0 ? 'rgba(255, 99, 132, 0.6)' :
+    value < 0 ? 'rgba(54, 162, 235, 0.6)' :
+                'rgba(200, 200, 200, 0.6)'
   );
   const borders = colors.map(c => c.replace('0.6', '1'));
 
   new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Deviation from 3',
-        data,
-        backgroundColor: colors,
-        borderColor: borders,
-        borderWidth: 1
-      }]
-    },
+    data: { labels, datasets: [{ label: 'Political Alignment', data, backgroundColor: colors, borderColor: borders, borderWidth: 1 }] },
     options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       scales: {
         x: {
-          min: -2,
-          max: 2,
+          min: -2, max: 2,
           ticks: {
             stepSize: 1,
-            callback: value => value + 3 // Convert back to actual score
+            callback: (value) => ({ '-2': "1 (Liberal)", '-1': "2", '0': "3 (Neutral)", '1': "4", '2': "5 (Conservative)"}[value] || ""
+            )
           },
-          title: {
-            display: true,
-            text: 'Score (centered at 3)',
-            font: { size: 14 }
-          },
-          grid: {
-            color: '#e0e0e0'
-          }
+          title: { display: true, text: "← Liberal (1)      Political Spectrum      Conservative (5) →", font: { size: 14 } },
+          grid: { color: '#e0e0e0' }
         },
-        y: {
-          ticks: {
-            font: { size: 12 }
-          }
-        }
+        y: { ticks: { font: { size: 12 } } }
       },
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => `Score: ${(ctx.raw + 3).toFixed(1)}`
-          }
-        },
-        annotation: {
-          annotations: {
-            centerLine: {
-              type: 'line',
-              xMin: 0,
-              xMax: 0,
-              borderColor: '#333',
-              borderWidth: 2,
-              borderDash: [4, 4],
-            }
-          }
-        }
+        tooltip: { callbacks: { label: ctx => `Score: ${(ctx.raw + 3).toFixed(1)}` } },
+        annotation: { annotations: { centerLine: { type: 'line', xMin: 0, xMax: 0, borderColor: '#333', borderWidth: 2, borderDash: [4, 4] } } }
       }
     },
-    plugins: [Chart.registry.getPlugin('annotation')] //Register annotation plugin
-  });
-}
-
-
-function fillTopicTable2(topicAverages) {
-  const tbody = document.getElementById("topicTableSummaryPost");
-  tbody.innerHTML = ""; // Clear old rows
-
-  Object.entries(topicAverages).forEach(([topic, userScore]) => {
-    const groupScore = groupAverage[topic] || 1; // fallback to 1 if group score is missing
-
-    const userPercent = ((userScore - 1) / 4) * 100;
-    const groupPercent = ((groupScore - 1) / 4) * 100;
-    const diff = userPercent - groupPercent;
-
-    const row = document.createElement("tr");
-    row.innerHTML = `
-      <td>${topic}</td>
-      <td class="fw-bold">${userPercent.toFixed(0)}%</td>
-      <td>${groupPercent.toFixed(0)}%</td>
-      <td class="${diff > 0 ? 'text-success' : diff < 0 ? 'text-danger' : ''}">
-        ${diff > 0 ? '+' : ''}${diff.toFixed(0)}%
-      </td>
-    `;
-    tbody.appendChild(row);
+    plugins: [Chart.registry.getPlugin('annotation')]
   });
 }
 
@@ -1371,62 +1227,20 @@ function showRadarChart2(userData) {
     data: {
       labels,
       datasets: [
-        {
-          label: "Your Scores",
-          data: userScores,
-          backgroundColor: "rgba(54, 162, 235, 0.3)",
-          borderColor: "rgba(54, 162, 235, 1)",
-          pointBackgroundColor: "rgba(54, 162, 235, 1)"
-        },
-        {
-          label: "Average of Others",
-          data: groupScores,
-          backgroundColor: "rgba(128, 128, 128, 0.2)",
-          borderColor: "rgba(128, 128, 128, 0.9)",
-          pointBackgroundColor: "rgba(128, 128, 128, 0.9)"
-        }
+        { label: "Your Scores", data: userScores, backgroundColor: "rgba(54, 162, 235, 0.3)", borderColor: "rgba(54, 162, 235, 1)", pointBackgroundColor: "rgba(54, 162, 235, 1)" },
+        { label: "Average of Others", data: groupScores, backgroundColor: "rgba(128, 128, 128, 0.2)", borderColor: "rgba(128, 128, 128, 0.9)", pointBackgroundColor: "rgba(128, 128, 128, 0.9)" }
       ]
     },
     options: {
-      responsive: true,
-      maintainAspectRatio: false, // allows us to manually size it
-      layout: {
-        padding: 0 // removes extra layout padding
-      },
-      plugins: {
-        legend: {
-          position: 'top',
-          labels: {
-            padding: 6,         // reduce space inside legend
-            boxWidth: 14,
-            font: {
-              size: 12
-            }
-          }
-        }
-      },
-      scales: {
-        r: {
-          min: 1,
-          max: 5,
-          ticks: {
-            stepSize: 1,
-            backdropColor: 'transparent'
-          },
-          pointLabels: {
-            font: {
-              size: 12
-            }
-          }
-        }
-      }
+      responsive: true, maintainAspectRatio: false, layout: { padding: 0 },
+      plugins: { legend: { position: 'top', labels: { padding: 6, boxWidth: 14, font: { size: 12 } } } },
+      scales: { r: { min: 1, max: 5, ticks: { stepSize: 1, backdropColor: 'transparent' }, pointLabels: { font: { size: 12 } } } }
     }
   });
 }
-function showBarChart2(postData) {
-  const ctx = document.getElementById('barChartPost');
-  if (!ctx) return console.error("Post line chart canvas not found.");
 
+function showBarChart2(postData) {
+  const ctx = document.getElementById('barChartPost'); if (!ctx) return console.error("Post line chart canvas not found.");
   const labels = Object.keys(postData);
   const postScores = Object.values(postData);
   const preScores = labels.map(topic => (typeof pre_data !== "undefined" ? pre_data[topic] || 0 : 0));
@@ -1434,155 +1248,187 @@ function showBarChart2(postData) {
   new Chart(ctx, {
     type: 'line',
     data: {
-      labels: labels,
+      labels,
       datasets: [
-        {
-          label: 'Pre-Debate Score',
-          data: preScores,
-          fill: false,
-          borderColor: 'rgba(108, 117, 125, 1)', // Gray
-          backgroundColor: 'rgba(108, 117, 125, 0.4)',
-          tension: 0.2,
-          pointStyle: 'circle',
-          pointRadius: 5,
-          pointHoverRadius: 6
-        },
-        {
-          label: 'Post-Debate Score',
-          data: postScores,
-          fill: false,
-          borderColor: 'rgba(54, 162, 235, 1)', // Blue
-          backgroundColor: 'rgba(54, 162, 235, 0.4)',
-          tension: 0.2,
-          pointStyle: 'rectRot',
-          pointRadius: 5,
-          pointHoverRadius: 6
-        }
+        { label: 'Pre-Debate Score', data: preScores, fill: false, borderColor: 'rgba(108, 117, 125, 1)', backgroundColor: 'rgba(108, 117, 125, 0.4)', tension: 0.2, pointStyle: 'circle', pointRadius: 5, pointHoverRadius: 6 },
+        { label: 'Post-Debate Score', data: postScores, fill: false, borderColor: 'rgba(54, 162, 235, 1)', backgroundColor: 'rgba(54, 162, 235, 0.4)', tension: 0.2, pointStyle: 'rectRot', pointRadius: 5, pointHoverRadius: 6 }
       ]
     },
     options: {
-        responsive: true,
-  maintainAspectRatio: false,
+      responsive: true, maintainAspectRatio: false,
       scales: {
-        y: {
-          beginAtZero: true,
-          min: 0,
-          max: 6,
-          ticks: {
-            stepSize: 1
-          },
-          title: {
-            display: true,
-            text: 'Average Score',
-            font: { size: 14 }
-          }
-        },
-        x: {
-          ticks: {
-            font: { size: 12 }
-          }
-        }
+        y: { beginAtZero: true, min: 0, max: 6, ticks: { stepSize: 1 }, title: { display: true, text: 'Average Score', font: { size: 14 } } },
+        x: { ticks: { font: { size: 12 } } }
       },
-      plugins: {
-        legend: {
-          display: true,
-          position: 'top',
-          labels: {
-            font: { size: 12 },
-            boxWidth: 12
-          }
-        },
-        tooltip: {
-          mode: 'index',
-          intersect: false
-        }
-      }
+      plugins: { legend: { display: true, position: 'top', labels: { font: { size: 12 }, boxWidth: 12 } }, tooltip: { mode: 'index', intersect: false } }
     }
   });
 }
 
-
-  function showBarChartPost(topicAverages) {
-  const ctx = document.getElementById('barChart3');
-  if (!ctx) return console.error("Bar canvas not found.");
-
+function showBarChartPost(topicAverages) {
+  const ctx = document.getElementById('barChart3'); if (!ctx) return console.error("Bar canvas not found.");
   const labels = Object.keys(topicAverages);
   const rawData = Object.values(topicAverages);
-
-  // Shift scores so that 3 is the center (0)
   const data = rawData.map(score => score - 3);
 
   const colors = data.map(value =>
-    value > 0 ? 'rgba(54, 162, 235, 0.6)' :
-    value < 0 ? 'rgba(255, 99, 132, 0.6)' :
-                'rgba(200, 200, 200, 0.6)'  // neutral
+    value > 0 ? 'rgba(255, 99, 132, 0.6)' :
+    value < 0 ? 'rgba(54, 162, 235, 0.6)' :
+                'rgba(200, 200, 200, 0.6)'
   );
   const borders = colors.map(c => c.replace('0.6', '1'));
 
   new Chart(ctx, {
     type: 'bar',
-    data: {
-      labels,
-      datasets: [{
-        label: 'Deviation from 3',
-        data,
-        backgroundColor: colors,
-        borderColor: borders,
-        borderWidth: 1
-      }]
-    },
+    data: { labels, datasets: [{ label: 'Political Alignment', data, backgroundColor: colors, borderColor: borders, borderWidth: 1 }] },
     options: {
-      indexAxis: 'y',
-      responsive: true,
-      maintainAspectRatio: false,
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
       scales: {
         x: {
-          min: -2,
-          max: 2,
+          min: -2, max: 2,
           ticks: {
             stepSize: 1,
-            callback: value => value + 3 // Convert back to actual score
+            callback: (value) => ({ '-2': "1 (Liberal)", '-1': "2", '0': "3 (Neutral)", '1': "4", '2': "5 (Conservative)"}[value] || ""
+            )
           },
-          title: {
-            display: true,
-            text: 'Score (centered at 3)',
-            font: { size: 14 }
-          },
-          grid: {
-            color: '#e0e0e0'
-          }
+          title: { display: true, text: "← Liberal (1)      Political Spectrum      Conservative (5) →", font: { size: 14 } },
+          grid: { color: '#e0e0e0' }
         },
-        y: {
-          ticks: {
-            font: { size: 12 }
-          }
-        }
+        y: { ticks: { font: { size: 12 } } }
       },
       plugins: {
         legend: { display: false },
-        tooltip: {
-          callbacks: {
-            label: ctx => `Score: ${(ctx.raw + 3).toFixed(1)}`
-          }
-        },
-        annotation: {
-          annotations: {
-            centerLine: {
-              type: 'line',
-              xMin: 0,
-              xMax: 0,
-              borderColor: '#333',
-              borderWidth: 2,
-              borderDash: [4, 4],
-            }
-          }
-        }
+        tooltip: { callbacks: { label: ctx => `Score: ${(ctx.raw + 3).toFixed(1)}` } },
+        annotation: { annotations: { centerLine: { type: 'line', xMin: 0, xMax: 0, borderColor: '#333', borderWidth: 2, borderDash: [4, 4] } } }
       }
     },
-    plugins: [Chart.registry.getPlugin('annotation')] //Register annotation plugin
+    plugins: [Chart.registry.getPlugin('annotation')]
   });
 }
+
+/* ---------------------------------
+   PRE/POST AUTO-RENDER ON LOAD
+---------------------------------- */
+const pre_data = {{ pre_data | tojson }};
+document.addEventListener("DOMContentLoaded", () => {
+  if (pre_data && Object.keys(pre_data).length > 0) {
+    document.getElementById('alignmentResultPre').innerHTML = chartHTML;
+    setTimeout(() => {
+      showRadarChart(pre_data);
+      showBarChart(pre_data);
+      fillTopicTable(pre_data);
+    }, 500);
+  }
+});
+
+const post_data = {{ post_data | tojson }};
+document.addEventListener("DOMContentLoaded", () => {
+  if (post_data && Object.keys(post_data).length > 0) {
+    document.getElementById('alignmentResultPost').innerHTML = chartHTML2;
+    setTimeout(() => {
+      showRadarChart2(post_data);
+      showBarChart2(post_data);
+      fillTopicTable2(post_data);
+      showBarChartPost(post_data);
+    }, 500);
+  }
+});
+
+/* ---------------------------------
+   RESEARCH / YOUTUBE TABS
+---------------------------------- */
+async function loadPapers() {
+  const list = document.getElementById('papersList');
+  const empty = document.getElementById('papersEmpty');
+  const loading = document.getElementById('papersLoading');
+  if (list.dataset.loaded) return;
+  try {
+    const res = await fetch(`/api/research?debate_id=${debateId}`);
+    const data = await res.json();
+    loading.classList.add('d-none');
+    list.innerHTML = '';
+    if (!data || data.length === 0) { empty.classList.remove('d-none'); return; }
+    data.slice(0,6).forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.innerHTML = `
+        <a href="${p.url || '#'}" target="_blank" class="fw-semibold">${p.title}</a>
+        <div class="paper-meta mt-1">
+          ${(p.authors && p.authors.length) ? p.authors.join(', ') + ' · ' : ''}
+          ${p.source ? p.source + ' · ' : ''}${p.year || ''}
+        </div>`;
+      list.appendChild(li);
+    });
+    list.dataset.loaded = '1';
+  } catch(e) { loading.textContent = 'Failed to load research.'; }
+}
+
+async function loadYouTube() {
+  const grid = document.getElementById('youtubeGrid');
+  const empty = document.getElementById('youtubeEmpty');
+  const loading = document.getElementById('youtubeLoading');
+  if (grid.dataset.loaded) return;
+  try {
+    const res = await fetch(`/api/youtube?debate_id=${debateId}`);
+    const data = await res.json();
+    loading.classList.add('d-none');
+    grid.innerHTML = '';
+    if (!data || data.length === 0) { empty.classList.remove('d-none'); return; }
+    data.slice(0,6).forEach(v => {
+      const col = document.createElement('div');
+      col.className = 'col-12 col-md-6 col-lg-4';
+      col.innerHTML = `
+        <div class="video-card h-100">
+          <a href="\${v.url}" target="_blank"><img class="video-thumb" src="\${v.thumb}" alt="\${v.title}"></a>
+          <div class="p-3">
+            <a class="fw-semibold d-block mb-1" href="\${v.url}" target="_blank">\${v.title}</a>
+            <div class="small text-muted">\${v.channel} · \${v.publishedAt}</div>
+          </div>
+        </div>`;
+      grid.appendChild(col);
+    });
+    grid.dataset.loaded = '1';
+  } catch(e) { loading.textContent = 'Failed to load videos.'; }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('tab-papers')?.addEventListener('shown.bs.tab', loadPapers);
+  document.getElementById('tab-youtube')?.addEventListener('shown.bs.tab', loadYouTube);
+});
+
+/* ---------------------------------
+   TEAM NOTES SAVE / SUMMARIZE (delegates to SunEditor)
+---------------------------------- */
+
+
+function summarizeTeamNote(week) {
+  const ed = window.teamEditors?.[week];
+  if (!ed) return alert('Team editor not found.');
+  const html = ed.getContents();
+  document.getElementById("loadingOverlay").style.display = "flex";
+  fetch(`/summarize-note/${debateId}/${week}`, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({ html })
+  })
+  .then(r=>r.json())
+  .then(d=>{
+    if (d.summary) {
+      ed.insertHTML(`<p><br></p><p><strong>Summary:</strong> ${d.summary}</p>`);
+    } else if (d.error) {
+      alert("Error: " + d.error);
+    }
+  })
+  .catch(()=> alert("Request failed."))
+  .finally(()=> document.getElementById("loadingOverlay").style.display = "none");
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  if (document.getElementById('editor-week1-team')) window.initTeamEditor?.('week1');
+  if (document.getElementById('editor-week3-team')) window.initTeamEditor?.('week3');
+});
 </script>
+
 
 
 </body>
