@@ -78,7 +78,27 @@
     canvas {
   max-height: 280px;
 }
+.custom-tabs .nav-link {
+  color: #6c757d;              /* muted gray text */
+  background: #f1f3f5;         /* light gray background */
+  border: 1px solid #dee2e6;   /* subtle border */
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
 
+.custom-tabs .nav-link:hover {
+  background: #e9ecef;         /* slightly darker hover */
+  color: #0f172a;              /* dark gray text */
+}
+
+.custom-tabs .nav-link.active {
+  background: #ffffff;         /* active tab blends with panel */
+  color: #0f172a;
+  border-color: #dee2e6 #dee2e6 #ffffff; /* keeps bottom border white */
+}
+        .custom-tabs .nav-link.active {
+  border-bottom: 1px solid #dee2e6;
+}
   </style>
 </head>
 <body>
@@ -91,22 +111,69 @@
   <h3 class="fw-bold">{{ topic }}</h3>
   <p class="text-muted">{{ country }} | Conversation Date: {{ date }}</p>
 </div>
+<div class="container">
 
-{% if news_articles %}
-<div class="container mb-5">
-  <h5 class="section-title mb-4">Latest News About the Topic</h5>
-  <ul class="list-group" id="newsList">
-    {% for article in news_articles %}
-      <li class="list-group-item news-item {% if loop.index > 5 %}d-none extra-news{% endif %}">
-        <a href="{{ article.url }}" target="_blank" class="fw-semibold">{{ article.title }}</a>
-        <div class="small text-muted">{{ article.source }} – {{ article.publishedAt }}</div>
-        <div>{{ article.description }}</div>
-      </li>
-    {% endfor %}
+<div class="card-custom custom-tabs mt-4" data-aos="fade-up">
+  <h4 class="section-title mt-0 mb-5">Explore Different Perspectives</h4>
+
+  <ul class="nav nav-pills justify-content-center mb-5" id="mediaTabs" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" id="tab-news" data-bs-toggle="pill" data-bs-target="#pane-news" type="button" role="tab">
+        News
+      </button>
+    </li>
+    <li class="nav-item ms-2" role="presentation">
+      <button class="nav-link" id="tab-papers" data-bs-toggle="pill" data-bs-target="#pane-papers" type="button" role="tab">
+        Research
+      </button>
+    </li>
+    <li class="nav-item ms-2" role="presentation">
+      <button class="nav-link" id="tab-youtube" data-bs-toggle="pill" data-bs-target="#pane-youtube" type="button" role="tab">
+        YouTube
+      </button>
+    </li>
   </ul>
 
+  <div class="tab-content">
+    <!-- News (server-rendered) -->
+    <div class="tab-pane fade show active" id="pane-news" role="tabpanel" aria-labelledby="tab-news">
+      <h5 class="section-title">Latest on “{{ topic }}”</h5>
+      {% if news_articles %}
+      <ul class="list-group" id="newsList">
+        {% for article in news_articles %}
+        <li class="list-group-item news-item {% if loop.index > 6 %}d-none{% endif %}">
+          <a href="{{ article.url }}" target="_blank" class="fw-semibold">{{ article.title }}</a>
+          <div class="small text-muted">{{ article.source }} – {{ article.publishedAt[:10] }}</div>
+          <div class="text-muted">{{ article.description }}</div>
+        </li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <p class="text-muted">No related news found.</p>
+      {% endif %}
+    </div>
+
+    <!-- Research (client-rendered) -->
+    <div class="tab-pane fade" id="pane-papers" role="tabpanel" aria-labelledby="tab-papers">
+      <h5 class="section-title">Research Articles</h5>
+      <div id="papersLoading" class="text-center py-3 small text-muted">Loading research…</div>
+      <ul class="list-group list-group-flush" id="papersList"></ul>
+      <div id="papersEmpty" class="text-center py-3 text-muted d-none">No papers found.</div>
+    </div>
+
+    <!-- YouTube (client-rendered) -->
+    <div class="tab-pane fade" id="pane-youtube" role="tabpanel" aria-labelledby="tab-youtube">
+      <h5 class="section-title">YouTube</h5>
+      <div id="youtubeLoading" class="text-center py-3 small text-muted">Loading videos…</div>
+      <div class="row g-3" id="youtubeGrid"></div>
+      <div id="youtubeEmpty" class="text-center py-3 text-muted d-none">No videos found.</div>
+    </div>
+  </div>
 </div>
-{% endif %}
+</div>
+<!-- expose debate id to JS -->
+<script>const debateId = {{ debate_id }};</script>
+
 
 
 {% if central_view %}
@@ -224,19 +291,19 @@ const chartHTML = `
       </div>
       <div class="card-custom">
         <h5 class="section-title">Preparation Notes</h5>
-{% set has_week1_note = false %}
-{% for note in notes %}
-  {% if note[0] == 'week1' %}
-    {% set has_week1_note = true %}
-    <div class="border rounded p-4 mb-3">
-      <small class="text-muted">{{ note[2] }}</small>
-      <div>{{ note[1] | safe }}</div>
-    </div>
+    {% set has_week1_note = false %}
+    {% for note in notes %}
+      {% if note[0] == 'week1' %}
+        {% set has_week1_note = true %}
+        <div class="border rounded p-4 mb-3">
+          <small class="text-muted">{{ note[2] }}</small>
+          <div>{{ note[1] | safe }}</div>
+        </div>
+      {% else %}
+  <p class="text-muted text-center">No notes available for Week 1.</p>
   {% endif %}
 {% endfor %}
-{% if not has_week1_note %}
-  <p class="text-muted text-center">No notes available for Week 1.</p>
-{% endif %}
+
 
 
       </div>
@@ -668,12 +735,8 @@ function showBarChart(topicAverages) {
           max: 2,
           ticks: {
             stepSize: 1,
-            callback: value => value + 3 // Convert back to actual score
-          },
-          title: {
-            display: true,
-            text: 'Score (centered at 3)',
-            font: { size: 14 }
+            callback: (value) => ({ '-2': "1 (Liberal)", '-1': "2", '0': "3 (Neutral)", '1': "4", '2': "5 (Conservative)"}[value] || ""
+            )
           },
           grid: {
             color: '#e0e0e0'
@@ -914,13 +977,8 @@ function showBarChart2(postData) {
           max: 2,
           ticks: {
             stepSize: 1,
-            callback: value => value + 3 // Convert back to actual score
-          },
-          title: {
-            display: true,
-            text: 'Score (centered at 3)',
-            font: { size: 14 }
-          },
+            callback: (value) => ({ '-2': "1 (Liberal)", '-1': "2", '0': "3 (Neutral)", '1': "4", '2': "5 (Conservative)"}[value] || ""
+            )          },
           grid: {
             color: '#e0e0e0'
           }
@@ -955,6 +1013,100 @@ function showBarChart2(postData) {
     plugins: [Chart.registry.getPlugin('annotation')] //Register annotation plugin
   });
 }
+</script>
+<script>
+async function loadPapers() {
+  const list = document.getElementById('papersList');
+  const empty = document.getElementById('papersEmpty');
+  const loading = document.getElementById('papersLoading');
+  if (list.dataset.loaded) return;
+
+  try {
+    const res = await fetch(`/api/research?debate_id=${debateId}`);
+    const data = await res.json();
+    loading.classList.add('d-none');
+    list.innerHTML = '';
+
+    if (!Array.isArray(data) || data.length === 0) {
+      empty.classList.remove('d-none');
+      return;
+    }
+
+    data.slice(0, 6).forEach(p => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item';
+      li.innerHTML = `
+        <a href="${p.url || '#'}" target="_blank" class="fw-semibold">${p.title}</a>
+        <div class="paper-meta mt-1">
+          ${(p.authors && p.authors.length) ? p.authors.join(', ') + ' · ' : ''}
+          ${p.source ? p.source + ' · ' : ''}${p.year || ''}
+        </div>`;
+      list.appendChild(li);
+    });
+
+    list.dataset.loaded = '1';
+  } catch (e) {
+    loading.textContent = 'Failed to load research.';
+  }
+}
+
+async function loadYouTube() {
+  const grid = document.getElementById('youtubeGrid');
+  const empty = document.getElementById('youtubeEmpty');
+  const loading = document.getElementById('youtubeLoading');
+  if (grid.dataset.loaded) return;
+
+  try {
+    const res = await fetch(`/api/youtube?debate_id=${debateId}`);
+    const data = await res.json();
+    loading.classList.add('d-none');
+    grid.innerHTML = '';
+
+    if (!Array.isArray(data) || data.length === 0) {
+      empty.classList.remove('d-none');
+      return;
+    }
+
+    data.slice(0, 6).forEach(v => {
+      const col = document.createElement('div');
+      col.className = 'col-12 col-md-6 col-lg-4';
+      col.innerHTML = `
+        <div class="video-card h-100">
+          <a href="${v.url}" target="_blank" rel="noopener">
+            <img class="video-thumb" src="${v.thumb}" alt="${v.title}" loading="lazy">
+          </a>
+          <div class="p-3">
+            <a class="fw-semibold d-block mb-1" href="${v.url}" target="_blank" rel="noopener">${v.title}</a>
+            <div class="small text-muted">${v.channel} · ${v.publishedAt}</div>
+          </div>
+        </div>`;
+      grid.appendChild(col);
+    });
+
+    grid.dataset.loaded = '1';
+  } catch (e) {
+    loading.textContent = 'Failed to load videos.';
+  }
+}
+
+// If you prefer inline embeds instead of thumbnail cards, swap inside the loop:
+// const id = new URL(v.url).searchParams.get('v');
+// col.innerHTML = `
+//   <div class="video-card h-100">
+//     <div class="ratio ratio-16x9">
+//       <iframe src="https://www.youtube.com/embed/${id}" title="${v.title}" allowfullscreen></iframe>
+//     </div>
+//     <div class="p-3">
+//       <div class="fw-semibold mb-1">${v.title}</div>
+//       <div class="small text-muted">${v.channel} · ${v.publishedAt}</div>
+//     </div>
+//   </div>`;
+
+document.addEventListener('DOMContentLoaded', () => {
+  // Load research immediately; load YouTube when the tab is shown
+  loadPapers();
+  document.getElementById('tab-youtube')?.addEventListener('shown.bs.tab', loadYouTube);
+});
 </script>
 
 </body>

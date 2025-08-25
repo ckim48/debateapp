@@ -17,7 +17,9 @@
   font-size: 0.85rem;
   padding: 0.25rem 0.5rem;
 }
-
+  .topic-chip {
+    border-radius: 999px;
+  }
 .section-header {
   background-color: #e9ecef; /* Calm gray background */
   color: #212529;
@@ -148,7 +150,20 @@ Economy vs. Freedom, Progress vs. Culture, Globalism vs. Nationalism, and Regula
           <canvas id="radarChartProfile"></canvas>
         </div>
 
+
                       <h6 class="fw-semibold mb-3 mt-5" style="font-size: 1.1rem; color: #495057;">Political Score Divergence per Category</h6>
+
+<div class="d-flex flex-column gap-2 mb-2">
+  <div id="debatePickerWrap" class="d-flex align-items-center gap-2"></div>
+
+  <div class="d-flex align-items-center gap-2 flex-wrap">
+    <strong class="me-1">Topics:</strong>
+    <div id="topicToggleControls" class="btn-toolbar flex-wrap gap-2"></div>
+    <button id="selectAllBtn" class="btn btn-sm btn-outline-secondary">All</button>
+  </div>
+</div>
+
+
 
         <div class="chart-container">
           <canvas id="barChartProfile"style="width: 100%; height: 400px; max-width: 1200px;"></canvas>
@@ -175,10 +190,16 @@ Economy vs. Freedom, Progress vs. Culture, Globalism vs. Nationalism, and Regula
 </div>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@1.4.0"></script>
 
+<script>
+  const preData = {{ pre_data | tojson | safe }};               // category → avg(pre,post) for ALL debates
+  const groupAvg = {{ group_average | tojson | safe }};         // category → group avg
+  const perDebateAvg = {{ per_debate_avg | tojson | safe }};    // debate → {category: avg(pre,post)}
+  const ALL_CATEGORIES = {{ all_categories | tojson | safe }};
+  const ALL_DEBATES = {{ all_debates | tojson | safe }};
+</script>
 
 <script>
-  const preData = {{ pre_data | tojson | safe }};
-  const groupAvg = {{ group_average | tojson | safe }};
+
 
   function renderProfileCharts() {
     const labels = Object.keys(preData);
@@ -233,38 +254,173 @@ Economy vs. Freedom, Progress vs. Culture, Globalism vs. Nationalism, and Regula
               'rgba(180, 180, 180, 0.6)'
     );
 
-new Chart(document.getElementById("barChartProfile"), {
-  type: 'bar',
-  data: {
-    labels: labels,
-    datasets: [{
-      label: 'Political Alignment',
-      data: deviationData,   // still (score - 3)
-      backgroundColor: colors
-    }]
-  },
-  options: {
+// Register annotation plugin if available (safe no-op if already registered)
+if (window['chartjs-plugin-annotation']) {
+  try { Chart.register(window['chartjs-plugin-annotation']); } catch {}
+}
+// --- helpers ---
+const avg = arr => arr.length ? arr.reduce((a,b)=>a+b,0) / arr.length : NaN;
+const ALL_OPTION = "__ALL__";
+const ALL_LABEL  = "All debates (Total)";
+
+// average of a single category across all debates
+function meanCategoryAcrossDebates(category) {
+  const vals = (ALL_DEBATES || [])
+    .map(d => perDebateAvg?.[d]?.[category])
+    .filter(v => typeof v === 'number');
+  return avg(vals);
+}
+
+// average (per debate) of the selected categories
+function perDebateSelectedAvg(debate, categories) {
+  const vals = categories
+    .map(cat => perDebateAvg?.[debate]?.[cat])
+    .filter(v => typeof v === 'number');
+  return avg(vals);
+}
+
+// ----- Debate picker (dropdown) -----
+(function ensureDebatePicker() {
+  const wrap = document.getElementById('debatePickerWrap');
+  if (!wrap) return;
+  wrap.innerHTML = '';
+
+  const label = document.createElement('label');
+  label.className = 'form-label fw-semibold mb-0';
+  label.textContent = 'Debate:';
+  label.setAttribute('for', 'debatePicker');
+
+  const select = document.createElement('select');
+  select.id = 'debatePicker';
+  select.className = 'form-select form-select-sm';
+  select.style.width = 'auto';
+
+  // Add ALL option first
+  const optAll = document.createElement('option');
+  optAll.value = ALL_OPTION;
+  optAll.textContent = ALL_LABEL;
+  select.appendChild(optAll);
+
+  // Then each debate
+  (ALL_DEBATES || []).forEach(d => {
+    const opt = document.createElement('option');
+    opt.value = d;
+    opt.textContent = d;
+    select.appendChild(opt);
+  });
+
+  // default to ALL
+  select.value = ALL_OPTION;
+
+  select.addEventListener('change', renderFilteredBar);
+
+  wrap.appendChild(label);
+  wrap.appendChild(select);
+})();
+
+// ----- Topic toggles (unchanged) -----
+(function buildTopicToggles(){
+  const topicsAll = (ALL_CATEGORIES || Object.keys(preData) || []);
+  const boxWrap = document.getElementById('topicToggleControls');
+  if (!boxWrap) return;
+  boxWrap.innerHTML = '';
+
+  topicsAll.forEach((t, i) => {
+    const id = `topicToggle_${i}`;
+    const input = document.createElement('input');
+    input.type = 'checkbox';
+    input.className = 'btn-check';
+    input.id = id;
+    input.autocomplete = 'off';
+    input.value = t;
+    input.checked = true;
+    input.addEventListener('change', renderFilteredBar);
+
+    const label = document.createElement('label');
+    label.className = 'btn btn-sm btn-outline-secondary topic-chip';
+    label.setAttribute('for', id);
+    label.textContent = t;
+
+    boxWrap.appendChild(input);
+    boxWrap.appendChild(label);
+  });
+
+  const allBtn = document.getElementById('selectAllBtn');
+  if (allBtn) {
+    allBtn.addEventListener('click', () => {
+      boxWrap.querySelectorAll('input.btn-check').forEach(cb => { cb.checked = true; });
+      renderFilteredBar();
+    });
+  }
+})();
+
+let barProfileChart;
+
+function renderFilteredBar() {
+  const chartEl = document.getElementById("barChartProfile");
+  if (!chartEl) return;
+
+  const debatePicker = document.getElementById('debatePicker');
+  const selectedDebate = debatePicker ? debatePicker.value : ALL_OPTION;
+
+  // which topics are ON?
+  let checked = Array.from(document.querySelectorAll('#topicToggleControls input.btn-check'))
+    .filter(cb => cb.checked)
+    .map(cb => cb.value);
+
+  if (!checked.length) checked = (ALL_CATEGORIES || Object.keys(preData) || []);
+
+  // labels = selected topics + "Total"
+  const labelsB = [...checked, 'Total'];
+
+  // per-topic scores depend on selection
+  const perTopicScores = checked.map(cat => {
+    if (selectedDebate === ALL_OPTION) {
+      return meanCategoryAcrossDebates(cat);           // avg across all debates
+    }
+    const s = perDebateAvg?.[selectedDebate]?.[cat];   // this debate only
+    return (typeof s === 'number') ? s : NaN;
+  });
+
+  const selectedDeviations = perTopicScores.map(s => (typeof s === 'number' ? s - 3 : NaN));
+
+  // "Total" = avg over debates of (avg over selected categories)  — unchanged logic
+  const perDebateAverages = (ALL_DEBATES || [])
+    .map(d => perDebateSelectedAvg(d, checked))
+    .filter(v => !Number.isNaN(v));
+
+  const overallAvgAcrossDebates = avg(perDebateAverages);
+  const totalDeviation = (typeof overallAvgAcrossDebates === 'number' && !Number.isNaN(overallAvgAcrossDebates))
+    ? (overallAvgAcrossDebates - 3)
+    : NaN;
+
+  const dataB = [...selectedDeviations, totalDeviation];
+
+  const colorsB = dataB.map(v =>
+    (v || v === 0) && !Number.isNaN(v)
+      ? (v > 0 ? 'rgba(219, 68, 55, 0.6)'
+               : v < 0 ? 'rgba(66, 133, 244, 0.6)'
+                       : 'rgba(180, 180, 180, 0.6)')
+      : 'rgba(200, 200, 200, 0.3)'
+  );
+
+  const options = {
     indexAxis: 'y',
     scales: {
       x: {
-        min: -2,
-        max: 2,
+        min: -2, max: 2,
         ticks: {
           stepSize: 1,
           callback: (value) => {
             switch (value) {
               case -2: return "1 (Liberal)";
               case -1: return "2";
-              case 0:  return "3 (Neutral)";
-              case 1:  return "4";
-              case 2:  return "5 (Conservative)";
+              case  0: return "3 (Neutral)";
+              case  1: return "4";
+              case  2: return "5 (Conservative)";
               default: return "";
             }
           }
-        },
-        title: {
-          display: true,
-          text: "← Liberal (1)      Political Spectrum      Conservative (5) →"
         }
       }
     },
@@ -281,10 +437,53 @@ new Chart(document.getElementById("barChartProfile"), {
             borderDash: [4, 4],
           }
         }
+      },
+      tooltip: {
+        callbacks: {
+          label: (ctx) => {
+            const isTotal = ctx.label === 'Total';
+            if (isTotal) {
+              const avgScore = (ctx.raw + 3);
+              return `Overall Avg (All Debates): ${Number.isNaN(avgScore) ? 'N/A' : avgScore.toFixed(2)}`;
+            }
+            const topic = ctx.label;
+            const s = (selectedDebate === ALL_OPTION)
+              ? meanCategoryAcrossDebates(topic)
+              : perDebateAvg?.[selectedDebate]?.[topic];
+
+            if (typeof s !== 'number') return 'No data';
+            const prefix = (selectedDebate === ALL_OPTION) ? 'All Debates' : selectedDebate;
+            return `Score (${prefix}): ${s.toFixed(2)} (dev ${(s-3).toFixed(2)})`;
+          }
+        }
       }
     }
+  };
+
+  if (!barProfileChart) {
+    barProfileChart = new Chart(chartEl, {
+      type: 'bar',
+      data: {
+        labels: labelsB,
+        datasets: [{
+          label: 'Political Alignment (avg PRE+POST)',
+          data: dataB,
+          backgroundColor: colorsB
+        }]
+      },
+      options
+    });
+  } else {
+    barProfileChart.data.labels = labelsB;
+    barProfileChart.data.datasets[0].data = dataB;
+    barProfileChart.data.datasets[0].backgroundColor = colorsB;
+    barProfileChart.options = options;
+    barProfileChart.update();
   }
-});
+}
+
+// initial draw
+renderFilteredBar();
 
 
     // Table

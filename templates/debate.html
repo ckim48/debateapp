@@ -98,10 +98,10 @@
 .custom-tabs .nav-link {
   color: #6c757d;              /* muted gray text */
   background: #f1f3f5;         /* light gray background */
-  border: 1px solid #dee2e6;   /* subtle border */
-  border-bottom: none;         /* seamless with tab panel */
+  border: 1px solid black;   /* subtle border */
   font-weight: 500;
   transition: all 0.2s ease;
+  z-index:10000;
 }
 
 .custom-tabs .nav-link:hover {
@@ -114,7 +114,9 @@
   color: #0f172a;
   border-color: #dee2e6 #dee2e6 #ffffff; /* keeps bottom border white */
 }
-
+    .custom-tabs .nav-link.active {
+  border-bottom: 1px solid #dee2e6;
+}
     .action-button { border-radius: 30px; padding: 8px 28px; border: none; background: #343a40; color: #fff; font-weight: 500; transition: background 0.2s; }
     .action-button:hover { background-color: #212529; }
     .form-label { font-weight: 500; }
@@ -125,6 +127,7 @@
     .nav-tabs .nav-item { margin: 0 6px; }
     .nav-tabs .nav-link { border-radius: 30px; background-color: #e9ecef; color: #495057; padding: 10px 25px; font-weight: 500; transition: all 0.3s ease; }
     .nav-tabs .nav-link:hover { background-color: #dee2e6; color: #212529; }
+
     .nav-tabs .nav-link.active { background-color: #343a40; color: #fff; font-weight: 600; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); }
     .tab-pane { animation: fadein 0.3s ease-in-out; }
     @keyframes fadein { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -160,7 +163,7 @@
           <div class="icon-box">
             <i class="bi bi-hand-thumbs-up-fill"></i>
           </div>
-          <h5 class="fw-bold mt-3">Support Group ({{ left_group|length }})</h5>
+          <h5 class="fw-bold mt-3">Affirmative Team ({{ left_group|length }})</h5>
           {% if left_group %}
           <ul class="list-unstyled mt-3 mb-0">
             {% for member in left_group %}
@@ -182,7 +185,7 @@
           <div class="icon-box">
             <i class="bi bi-hand-thumbs-down-fill"></i>
           </div>
-          <h5 class="fw-bold mt-3">Oppose Group ({{ right_group|length }})</h5>
+          <h5 class="fw-bold mt-3">Negative Team ({{ right_group|length }})</h5>
           {% if right_group %}
           <ul class="list-unstyled mt-3 mb-0">
             {% for member in right_group %}
@@ -198,6 +201,10 @@
     </div>
   </div>
 <div class="card-custom custom-tabs mt-4" data-aos="fade-up">
+    <div class="text-center">
+    <div class="section-title mt-1" data-aos="fade-up">Explore Different Perspectives</div>
+    <p style="margin-top:-15px;" data-aos="fade-up">Explore Different Perspectives Access curated resources to build informed, evidence-based arguments.</p>
+    </div>
   <ul class="nav nav-pills justify-content-center mb-5" id="mediaTabs" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="tab-news" data-bs-toggle="pill" data-bs-target="#pane-news" type="button" role="tab">
@@ -312,7 +319,7 @@
           <h5><strong>Week 1: Preparation Phase</strong></h5>
           <ul class="mb-0">
             <li>Discuss with your teammates and plan your strategy.</li>
-            <li>Read the recommended news articles and the AI's viewpoint.</li>
+            <li>Review news and curated resources.</li>
             <li>Complete the <strong>Political Alignment Test AND Pre-Debate Survey</strong>.</li>
             <li>Write your preparation notes using the editor provided.</li>
           </ul>
@@ -540,7 +547,7 @@
         <h5 class="modal-title w-100" id="groupAssignmentLabel">You're Assigned!</h5>
       </div>
       <div class="modal-body">
-        You have been assigned to the <strong id="assignedGroupText"></strong> group for this debate.
+        You have been assigned to the <strong id="assignedGroupText"></strong> team for this debate.
       </div>
       <div class="modal-footer justify-content-center">
         <button type="button" class="btn btn-dark" data-bs-dismiss="modal">Got it</button>
@@ -548,8 +555,94 @@
     </div>
   </div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function appendAtEnd(ed, html){
+  // 1) If this build supports appendHTML, use it.
+  if (typeof ed.appendHTML === "function") {
+    ed.appendHTML(html);
+    return;
+  }
+  // 2) Safe fallback: read → concat → write back
+  try {
+    const current = ed.getContents() || "";
+    ed.setContents(current + html);
+  } catch {
+    // 3) Last resort: insert a trailing container then insert into it
+    const current = ed.getText() ? ed.getContents() : "";
+    ed.setContents(current + '<p id="__append_anchor__"></p>');
+    const anchor = ed.core?.context?.element?.wysiwyg?.querySelector('#__append_anchor__');
+    if (anchor && ed.core?.setRange) {
+      const r = document.createRange();
+      r.selectNode(anchor);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
+    ed.insertHTML(html);
+    // cleanup
+    ed.core?.context?.element?.wysiwyg?.querySelector('#__append_anchor__')?.remove();
+  }
+}
+
+// tiny HTML escaper used below
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));}
+</script>
+<script>
+// cross-version SunEditor helpers
+function seFocus(ed){
+  if (ed?.core?.focus) return ed.core.focus();
+  if (ed?.focus) return ed.focus(); // some builds expose it
+  if (ed?.core?.context?.element?.wysiwyg?.focus) return ed.core.context.element.wysiwyg.focus();
+}
+
+function seSaveRange(ed){
+  if (ed?.core?.saveRange) return ed.core.saveRange();
+  if (ed?.saveRange) return ed.saveRange();
+  // fallback: remember current range if available
+  try {
+    const r = ed?.core?.getRange?.();
+    if (r) ed.__savedRange = r;
+    return r;
+  } catch(e){}
+}
+
+function seRestoreRange(ed){
+  if (ed?.core?.restoreRange) return ed.core.restoreRange();
+  if (ed?.restoreRange) return ed.restoreRange();
+  if (ed?.__savedRange && ed?.core?.setRange) return ed.core.setRange(ed.__savedRange);
+}
+
+// tiny HTML escaper for safe insertion
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[m]));}
+</script>
+
 <script>
   const debateId = {{ debate_id }};
+</script>
+<script>
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const assignedNow = {{ first_assignment | tojson }};
+    var groupName   = {{ group_name | tojson }};
+if (groupName === "support") {
+  groupName = "Affirmative";
+} else {
+  groupName = "Negative";
+}
+
+
+    if (assignedNow) {
+      const el = document.getElementById('groupAssignmentModal');
+      if (el) {
+        const slot = document.getElementById('assignedGroupText');
+        if (slot) slot.textContent = groupName || '';
+        const modal = new bootstrap.Modal(el, { backdrop: 'static', keyboard: false });
+        modal.show();
+      }
+    }
+  });
+
 </script>
 
 <script>
@@ -772,34 +865,43 @@ document.getElementById('postSurveyForm')?.addEventListener('submit', function (
   // Export for other scripts
   window.initTeamEditor = initTeamEditor;
 
+window.summarizeNote = function (week) {
+  const ed = window.editors[week];
+  if (!ed) return alert('Editor not found.');
 
-  // Personal note actions
-  window.summarizeNote = function (week) {
-    const ed = window.editors[week];
-    if (!ed) return alert('Editor not found.');
-    const html = ed.getContents();
+  seFocus(ed);
+  seSaveRange(ed);
 
-    const overlay = document.getElementById('loadingOverlay');
-    if (overlay) overlay.style.display = 'flex';
+  const html = ed.getContents();
+  const overlay = document.getElementById('loadingOverlay');
+  if (overlay) overlay.style.display = 'flex';
 
-    fetch(`/summarize-note/${debateId}/${week}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ html })
-    })
-    .then(r => r.json())
-    .then(d => {
-      if (d.summary) {
-        ed.insertHTML(`<p><br></p><p><strong>Summary:</strong> ${d.summary}</p>`);
-      } else if (d.error) {
-        alert('Error: ' + d.error);
-      }
-    })
-    .catch(() => alert('Request failed.'))
-    .finally(() => {
-      if (overlay) overlay.style.display = 'none';
-    });
-  };
+  fetch(`/summarize-note/${debateId}/${week}`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ html })
+  })
+  .then(r => r.json())
+  .then(d => {
+    if (d.summary) {
+      seFocus(ed);
+      seRestoreRange(ed);
+      appendAtEnd(ed, `<p><strong>Summary:</strong> ${esc(d.summary)}</p>`);
+
+
+      // optional: save immediately
+      fetch(`/save-note/${debateId}/${week}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ html: ed.getContents() })
+      }).catch(()=>{});
+    } else if (d.error) {
+      alert('Error: ' + d.error);
+    }
+  })
+  .catch(() => alert('Request failed.'))
+  .finally(() => { if (overlay) overlay.style.display = 'none'; });
+};
 
   window.submitNote = function (week) {
     const ed = window.editors[week];
@@ -922,7 +1024,6 @@ document.getElementById('alignmentFormPost')?.addEventListener('submit', functio
 });
 </script>
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
 <script>
   const groupAverage = {{ group_average | tojson | safe }};
@@ -1201,7 +1302,6 @@ function showBarChart(topicAverages) {
             callback: (value) => ({ '-2': "1 (Liberal)", '-1': "2", '0': "3 (Neutral)", '1': "4", '2': "5 (Conservative)"}[value] || ""
             )
           },
-          title: { display: true, text: "← Liberal (1)      Political Spectrum      Conservative (5) →", font: { size: 14 } },
           grid: { color: '#e0e0e0' }
         },
         y: { ticks: { font: { size: 12 } } }
@@ -1291,7 +1391,6 @@ function showBarChartPost(topicAverages) {
             callback: (value) => ({ '-2': "1 (Liberal)", '-1': "2", '0': "3 (Neutral)", '1': "4", '2': "5 (Conservative)"}[value] || ""
             )
           },
-          title: { display: true, text: "← Liberal (1)      Political Spectrum      Conservative (5) →", font: { size: 14 } },
           grid: { color: '#e0e0e0' }
         },
         y: { ticks: { font: { size: 12 } } }
@@ -1368,27 +1467,39 @@ async function loadYouTube() {
   const empty = document.getElementById('youtubeEmpty');
   const loading = document.getElementById('youtubeLoading');
   if (grid.dataset.loaded) return;
+
   try {
     const res = await fetch(`/api/youtube?debate_id=${debateId}`);
     const data = await res.json();
+
     loading.classList.add('d-none');
     grid.innerHTML = '';
-    if (!data || data.length === 0) { empty.classList.remove('d-none'); return; }
-    data.slice(0,6).forEach(v => {
+
+    if (!Array.isArray(data) || data.length === 0) {
+      empty.classList.remove('d-none');
+      return;
+    }
+
+    data.slice(0, 6).forEach(v => {
       const col = document.createElement('div');
       col.className = 'col-12 col-md-6 col-lg-4';
       col.innerHTML = `
         <div class="video-card h-100">
-          <a href="\${v.url}" target="_blank"><img class="video-thumb" src="\${v.thumb}" alt="\${v.title}"></a>
+          <a href="${v.url}" target="_blank" rel="noopener">
+            <img class="video-thumb" src="${v.thumb}" alt="${v.title}" loading="lazy">
+          </a>
           <div class="p-3">
-            <a class="fw-semibold d-block mb-1" href="\${v.url}" target="_blank">\${v.title}</a>
-            <div class="small text-muted">\${v.channel} · \${v.publishedAt}</div>
+            <a class="fw-semibold d-block mb-1" href="${v.url}" target="_blank" rel="noopener">${v.title}</a>
+            <div class="small text-muted">${v.channel} · ${v.publishedAt}</div>
           </div>
         </div>`;
       grid.appendChild(col);
     });
+
     grid.dataset.loaded = '1';
-  } catch(e) { loading.textContent = 'Failed to load videos.'; }
+  } catch (e) {
+    loading.textContent = 'Failed to load videos.';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1399,13 +1510,16 @@ document.addEventListener('DOMContentLoaded', () => {
 /* ---------------------------------
    TEAM NOTES SAVE / SUMMARIZE (delegates to SunEditor)
 ---------------------------------- */
-
-
 function summarizeTeamNote(week) {
   const ed = window.teamEditors?.[week];
   if (!ed) return alert('Team editor not found.');
+
+  seFocus(ed);
+  seSaveRange(ed);
+
   const html = ed.getContents();
   document.getElementById("loadingOverlay").style.display = "flex";
+
   fetch(`/summarize-note/${debateId}/${week}`, {
     method:'POST',
     headers:{'Content-Type':'application/json'},
@@ -1414,7 +1528,16 @@ function summarizeTeamNote(week) {
   .then(r=>r.json())
   .then(d=>{
     if (d.summary) {
-      ed.insertHTML(`<p><br></p><p><strong>Summary:</strong> ${d.summary}</p>`);
+      seFocus(ed);
+      seRestoreRange(ed);
+      appendAtEnd(ed, `<p><strong>Summary:</strong> ${esc(d.summary)}</p>`);
+
+
+      fetch(`/save-team-note/${debateId}/${week}`, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ html: ed.getContents() })
+      }).catch(()=>{});
     } else if (d.error) {
       alert("Error: " + d.error);
     }
